@@ -29,6 +29,7 @@ let locked = false;
 let gameOver = false;
 const totalRounds = 10;
 const $ = (selector) => document.querySelector(selector);
+let feedbackAnimationId;
 
 function renderCategories() {
   $("#category-list").innerHTML = categories.map((category) => `<button class="category-button" type="button" data-category="${category.name}"><span class="cat-icon">${category.icon}</span><span><strong>${category.name}</strong><small>${category.hint}</small></span></button>`).join("");
@@ -64,6 +65,27 @@ function renderProduct() {
   locked = false;
 }
 function updateTimer() { $("#timer").textContent = `00:${String(seconds).padStart(2, "0")}`; }
+function showFeedbackAnimation(correct, category) {
+  const card = $("#product-card");
+  const feedback = $("#feedback");
+  const celebration = $("#celebration");
+  const selectedButton = [...document.querySelectorAll(".category-button")].find((button) => button.dataset.category === category);
+  document.body.classList.remove("answer-correct", "answer-wrong");
+  card.classList.remove("answer-correct", "answer-wrong");
+  feedback.classList.remove("answer-correct", "answer-wrong");
+  document.querySelectorAll(".category-button").forEach((button) => button.classList.remove("selected-correct", "selected-wrong"));
+  void card.offsetWidth;
+  document.body.classList.add(correct ? "answer-correct" : "answer-wrong");
+  card.classList.add(correct ? "answer-correct" : "answer-wrong");
+  feedback.classList.add(correct ? "answer-correct" : "answer-wrong");
+  if (selectedButton) selectedButton.classList.add(correct ? "selected-correct" : "selected-wrong");
+  celebration.classList.toggle("is-visible", correct);
+  clearTimeout(feedbackAnimationId);
+  feedbackAnimationId = setTimeout(() => {
+    document.body.classList.remove("answer-correct", "answer-wrong");
+    celebration.classList.remove("is-visible");
+  }, 850);
+}
 function answer(category) {
   if (locked || gameOver) return;
   locked = true;
@@ -73,6 +95,7 @@ function answer(category) {
   const points = correct ? 100 + timeBonus : 0;
   const feedback = $("#feedback");
   if (correct) { score += points; correctAnswers += 1; streak += 1; feedback.textContent = `✓ ¡Correcto! +${points} puntos · ${seconds}s restantes`; feedback.className = "feedback correct"; } else { streak = 0; feedback.textContent = category === "__skipped__" ? `↷ Producto saltado. Era ${product.category}.` : `× Casi. Era ${product.category}. Respira y sigue.`; feedback.className = "feedback wrong"; }
+  showFeedbackAnimation(correct, category);
   $("#streak-value").textContent = streak;
   players[2].points = score;
   players[2].time = `${(12 - seconds + 1).toFixed(2)}s`;
