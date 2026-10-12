@@ -41,3 +41,35 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 22px
 .product-sun { z-index: 1; }
 .category-zone { background: linear-gradient(rgba(237,242,233,.91), rgba(237,242,233,.96)), url("tienda-conveniencia-articulos-esenciales_328432-22479.webp") center / cover; }
 .category-button { background: rgba(255,255,255,.72); }
+
+body.dark-mode {
+  --ink: #e8f0e8;
+  --muted: #9aaca4;
+  --paper: #111916;
+  --surface: #1b2723;
+  --line: #30423a;
+  --lime: #cce94e;
+}
+body.dark-mode .app-shell {
+  background: linear-gradient(90deg, rgba(17,25,22,.97), rgba(17,25,22,.9)), url("tienda-de-supermercado.webp") center top / cover fixed, var(--paper);
+}
+body.dark-mode .topbar { background: rgba(17,25,22,.88); }
+body.dark-mode .category-zone { background: linear-gradient(rgba(34,49,43,.94), rgba(34,49,43,.97)), url("tienda-conveniencia-articulos-esenciales_328432-22479.webp") center / cover; }
+body.dark-mode .category-button { background: rgba(27,39,35,.8); border-color: #40564a; }
+body.dark-mode .progress-track { background: #30423a; }
+body.dark-mode .product-card::after { border-color: #30423a; box-shadow: 0 0 0 24px #1b2723, 0 0 0 25px #30423a, 0 0 0 48px #1b2723, 0 0 0 49px #30423a; }
+.result-modal { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(10, 20, 17, .78); backdrop-filter: blur(8px); }
+.result-modal[hidden] { display: none; }
+.result-card { width: min(100%, 480px); padding: 38px; text-align: center; color: var(--ink); background: var(--surface); border: 1px solid var(--line); box-shadow: 12px 12px 0 var(--lime); animation: modal-in .3s ease both; }
+.result-kicker { color: var(--coral); font: 10px var(--mono); letter-spacing: .14em; }
+.result-medal { margin: 18px 0 5px; font-size: 48px; }
+.result-card h2 { margin: 0; font-size: clamp(36px, 8vw, 58px); line-height: 1; letter-spacing: -.06em; }
+.result-card p { color: var(--muted); }
+.result-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 28px 0; }
+.result-stats div { padding: 14px 8px; background: color-mix(in srgb, var(--paper) 80%, var(--surface)); }
+.result-stats span { display: block; color: var(--muted); font: 9px var(--mono); text-transform: uppercase; }
+.result-stats strong { display: block; margin-top: 6px; font: 700 18px var(--mono); }
+.restart-button { width: 100%; padding: 14px 18px; border: 0; background: var(--lime); color: #12231f; font-weight: 700; }
+.restart-button span { float: right; }
+@keyframes modal-in { from { opacity: 0; transform: translateY(18px) scale(.97); } to { opacity: 1; transform: none; } }
+@media (max-width: 520px) { .result-card { padding: 28px 20px; } .room-pill { display: none; } .result-stats { gap: 5px; } }

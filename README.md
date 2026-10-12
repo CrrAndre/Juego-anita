@@ -17,8 +17,11 @@ Después abre `http://localhost:4173`.
 - Interfaz responsive para escritorio, tablet y móvil.
 - 6 productos de ejemplo con categoría, subcategoría, unidad de medida, descripción, marca, referencia e icono visual.
 - Cinco categorías jugables y control por clic o tecla `Space` para saltar.
-- 100 puntos por acierto más bonus según los segundos restantes.
-- Racha de respuestas, ranking de la sala y estado de participantes.
+- Partidas de 10 rondas con contador, racha y bonus según los segundos restantes.
+- Sistema de resultados: victoria en primer lugar, clasificación entre los tres primeros o derrota.
+- Pantalla final con puntaje, aciertos, posición y botón para jugar otra vez.
+- Modo oscuro persistente mediante el botón de tema.
+- Ranking de la sala actualizado mientras juegas.
 - Animaciones ligeras para producto, progreso y feedback.
 - Configuración mínima de Netlify en `netlify.toml`.
 - Esquema PostgreSQL listo para Supabase en `supabase/schema.sql`.

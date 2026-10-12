@@ -19,7 +19,7 @@
         </a>
         <div class="room-pill"><span class="pulse-dot"></span><span id="room-status">SALA #MANGO-42</span><b>3/8</b></div>
         <div class="header-actions">
-          <button class="icon-button" id="sound-toggle" type="button" aria-label="Activar o desactivar sonidos">◖</button>
+          <button class="icon-button" id="theme-toggle" type="button" aria-label="Activar modo oscuro" aria-pressed="false">☾</button>
           <button class="avatar" type="button" aria-label="Abrir perfil">AN</button>
         </div>
       </header>
@@ -27,10 +27,10 @@
       <main id="top">
         <section class="hero-grid">
           <div class="intro-copy">
-            <p class="eyebrow"><span class="eyebrow-line"></span>Ronda 04 / 10</p>
+            <p class="eyebrow"><span class="eyebrow-line"></span><span id="round-label">Ronda 01 / 10</span></p>
             <h1>Clasifica.<br /><em>Corre.</em> Gana.</h1>
-            <p class="intro-text">La caja está abierta. Lee la ficha y desliza cada producto hacia la categoría correcta antes de que se agote el tiempo.</p>
-            <div class="progress-row"><span>Progreso de la ronda</span><strong id="round-progress">04 / 10</strong></div>
+            <p class="intro-text">La caja está abierta. Lee la ficha y clasifica cada producto antes de que se agote el tiempo. Cada acierto suma puntos y cada segundo cuenta.</p>
+            <div class="progress-row"><span>Progreso de la ronda</span><strong id="round-progress">01 / 10</strong></div>
             <div class="progress-track"><span id="round-progress-fill"></span></div>
           </div>
           <div class="scoreboard-panel">
@@ -43,12 +43,12 @@
         <section class="game-section" aria-labelledby="game-title">
           <div class="section-heading">
             <div><p class="eyebrow"><span class="eyebrow-line"></span>Modo contrarreloj</p><h2 id="game-title">Pasa por caja</h2></div>
-            <div class="streak"><span class="streak-icon">✦</span><span>Racha <strong id="streak-value">4</strong></span></div>
+            <div class="streak"><span class="streak-icon">✦</span><span>Racha <strong id="streak-value">0</strong></span></div>
           </div>
 
           <div class="game-layout">
             <div class="product-zone">
-              <div class="round-meta"><span>Producto <strong id="product-number">04</strong> de 10</span><span class="timer" id="timer">00:12</span></div>
+              <div class="round-meta"><span>Producto <strong id="product-number">01</strong> de 10</span><span class="timer" id="timer">00:12</span></div>
               <article class="product-card" id="product-card">
                 <div class="product-card-top"><span class="barcode">|||| ||| ||||</span><span class="product-id" id="product-id">SKU 00482</span></div>
                 <div class="product-illustration" id="product-illustration" aria-hidden="true"><span class="product-sun">✦</span><span class="product-emoji">🥛</span></div>
@@ -73,7 +73,21 @@
         </section>
       </main>
 
-      <footer><span>© 2026 SHELF SPRINT</span><span>Hecho para equipos que piensan rápido.</span><a href="#schema">BASE DE DATOS ↗</a></footer>
+      <footer><span>© 2026 SHELF SPRINT</span><span>Hecho para equipos que piensan rápido.</span><a href="#top">VOLVER ARRIBA ↗</a></footer>
+    </div>
+    <div class="result-modal" id="result-modal" role="dialog" aria-modal="true" aria-labelledby="result-title" hidden>
+      <div class="result-card">
+        <span class="result-kicker" id="result-kicker">PARTIDA TERMINADA</span>
+        <div class="result-medal" id="result-medal">🏆</div>
+        <h2 id="result-title">¡Clasificado!</h2>
+        <p id="result-message">Tu velocidad te puso en lo más alto.</p>
+        <div class="result-stats">
+          <div><span>Puntaje</span><strong id="final-score">0</strong></div>
+          <div><span>Aciertos</span><strong id="final-correct">0/10</strong></div>
+          <div><span>Posición</span><strong id="final-position">#1</strong></div>
+        </div>
+        <button class="restart-button" id="restart-button" type="button">Jugar otra vez <span>↗</span></button>
+      </div>
     </div>
     <script src="app.js"></script>
   </body>

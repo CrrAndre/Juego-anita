@@ -20,11 +20,14 @@ const players = [
   { initials: "SO", name: "Sofía P.", points: 1160, time: "10.21s" }
 ];
 let productIndex = 0;
-let score = 1240;
-let streak = 4;
+let score = 0;
+let streak = 0;
+let correctAnswers = 0;
 let seconds = 12;
 let timerId;
 let locked = false;
+let gameOver = false;
+const totalRounds = 10;
 const $ = (selector) => document.querySelector(selector);
 
 function renderCategories() {
@@ -32,12 +35,17 @@ function renderCategories() {
   document.querySelectorAll(".category-button").forEach((button) => button.addEventListener("click", () => answer(button.dataset.category)));
 }
 function renderLeaderboard() {
-  $("#leaderboard").innerHTML = players.map((player, index) => `<div class="leader-row ${player.me ? "me" : ""}"><small>${String(index + 1).padStart(2, "0")}</small><span class="leader-avatar">${player.initials}</span><span>${player.name}</span><b>${player.points.toLocaleString("es-CO")}</b><small>${player.time}</small></div>`).join("");
+  const ranking = [...players].sort((a, b) => b.points - a.points);
+  const position = ranking.findIndex((player) => player.me) + 1;
+  $("#leaderboard").innerHTML = ranking.map((player, index) => `<div class="leader-row ${player.me ? "me" : ""}"><small>${String(index + 1).padStart(2, "0")}</small><span class="leader-avatar">${player.initials}</span><span>${player.name}</span><b>${player.points.toLocaleString("es-CO")}</b><small>${player.time}</small></div>`).join("");
   $("#your-score").textContent = `${score.toLocaleString("es-CO")} pts`;
+  $("#your-position").textContent = position;
 }
 function renderProduct() {
   const product = products[productIndex % products.length];
-  $("#product-number").textContent = String(productIndex + 4).padStart(2, "0");
+  const round = productIndex + 1;
+  $("#product-number").textContent = String(round).padStart(2, "0");
+  $("#round-label").textContent = `Ronda ${String(round).padStart(2, "0")} / ${totalRounds}`;
   $("#product-id").textContent = product.id;
   $("#product-illustration").querySelector(".product-emoji").textContent = product.emoji;
   $("#product-tag").textContent = product.tag;
@@ -57,33 +65,78 @@ function renderProduct() {
 }
 function updateTimer() { $("#timer").textContent = `00:${String(seconds).padStart(2, "0")}`; }
 function answer(category) {
-  if (locked) return;
+  if (locked || gameOver) return;
   locked = true;
   const product = products[productIndex % products.length];
   const correct = category === product.category;
   const timeBonus = Math.max(0, seconds * 5);
   const points = correct ? 100 + timeBonus : 0;
   const feedback = $("#feedback");
-  if (correct) { score += points; streak += 1; feedback.textContent = `✓ ¡Correcto! +${points} puntos · ${seconds}s restantes`; feedback.className = "feedback correct"; } else { streak = 0; feedback.textContent = `× Casi. Era ${product.category}. Respira y sigue.`; feedback.className = "feedback wrong"; }
+  if (correct) { score += points; correctAnswers += 1; streak += 1; feedback.textContent = `✓ ¡Correcto! +${points} puntos · ${seconds}s restantes`; feedback.className = "feedback correct"; } else { streak = 0; feedback.textContent = category === "__skipped__" ? `↷ Producto saltado. Era ${product.category}.` : `× Casi. Era ${product.category}. Respira y sigue.`; feedback.className = "feedback wrong"; }
   $("#streak-value").textContent = streak;
   players[2].points = score;
   players[2].time = `${(12 - seconds + 1).toFixed(2)}s`;
   renderLeaderboard();
   productIndex += 1;
-  $("#round-progress").textContent = `${String(Math.min(10, productIndex + 4)).padStart(2, "0")} / 10`;
-  $("#round-progress-fill").style.width = `${Math.min(100, ((productIndex + 4) / 10) * 100)}%`;
+  $("#round-progress").textContent = `${String(Math.min(totalRounds, productIndex + 1)).padStart(2, "0")} / ${totalRounds}`;
+  $("#round-progress-fill").style.width = `${Math.min(100, ((productIndex + 1) / totalRounds) * 100)}%`;
   clearInterval(timerId);
-  setTimeout(renderProduct, 900);
-  timerId = setInterval(tick, 1000);
+  if (productIndex + 1 >= totalRounds) {
+    setTimeout(endGame, 900);
+  } else {
+    setTimeout(renderProduct, 900);
+    timerId = setInterval(tick, 1000);
+  }
 }
 function tick() { if (locked) return; seconds -= 1; updateTimer(); if (seconds <= 0) answer("__timeout__"); }
-function skip() { if (!locked) { locked = true; $("#feedback").textContent = "Producto saltado. La velocidad también cuenta."; $("#feedback").className = "feedback wrong"; productIndex += 1; clearInterval(timerId); setTimeout(renderProduct, 500); timerId = setInterval(tick, 1000); } }
+function skip() { if (!locked && !gameOver) { answer("__skipped__"); } }
 function startTimer() { clearInterval(timerId); timerId = setInterval(tick, 1000); }
+function endGame() {
+  gameOver = true;
+  clearInterval(timerId);
+  const ranking = [...players].sort((a, b) => b.points - a.points);
+  const position = ranking.findIndex((player) => player.me) + 1;
+  const won = position === 1;
+  const qualified = position <= 3;
+  $("#result-kicker").textContent = won ? "CAMPEÓN DE LA SALA" : qualified ? "TE CLASIFICASTE" : "PARTIDA TERMINADA";
+  $("#result-medal").textContent = won ? "🏆" : qualified ? "🎖️" : "💪";
+  $("#result-title").textContent = won ? "¡Victoria!" : qualified ? "¡Clasificado!" : "¡Buen intento!";
+  $("#result-message").textContent = won ? "Tu velocidad te puso en lo más alto." : qualified ? "Terminaste entre los tres mejores de la sala." : "Practica tu velocidad y vuelve a intentarlo.";
+  $("#final-score").textContent = `${score.toLocaleString("es-CO")} pts`;
+  $("#final-correct").textContent = `${correctAnswers}/${totalRounds}`;
+  $("#final-position").textContent = `#${position}`;
+  $("#result-modal").hidden = false;
+}
+function restartGame() {
+  productIndex = 0;
+  score = 0;
+  streak = 0;
+  correctAnswers = 0;
+  gameOver = false;
+  players[2].points = score;
+  players[2].time = "—";
+  $("#result-modal").hidden = true;
+  $("#streak-value").textContent = streak;
+  $("#round-progress").textContent = `01 / ${totalRounds}`;
+  $("#round-progress-fill").style.width = "10%";
+  renderLeaderboard();
+  renderProduct();
+  startTimer();
+}
+function applyTheme(isDark) {
+  document.body.classList.toggle("dark-mode", isDark);
+  $("#theme-toggle").textContent = isDark ? "☀" : "☾";
+  $("#theme-toggle").setAttribute("aria-label", isDark ? "Activar modo claro" : "Activar modo oscuro");
+  $("#theme-toggle").setAttribute("aria-pressed", String(isDark));
+  localStorage.setItem("shelf-sprint-theme", isDark ? "dark" : "light");
+}
 
 renderCategories();
 renderLeaderboard();
 renderProduct();
 startTimer();
 $("#skip-button").addEventListener("click", skip);
-$("#sound-toggle").addEventListener("click", (event) => { event.currentTarget.textContent = event.currentTarget.textContent === "◖" ? "◌" : "◖"; });
+$("#restart-button").addEventListener("click", restartGame);
+$("#theme-toggle").addEventListener("click", () => applyTheme(!document.body.classList.contains("dark-mode")));
+applyTheme(localStorage.getItem("shelf-sprint-theme") === "dark");
 document.addEventListener("keydown", (event) => { if (event.code === "Space") { event.preventDefault(); skip(); } });
