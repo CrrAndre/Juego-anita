@@ -4,14 +4,19 @@ const products = [
   { id: "SKU 00219", name: "Banano premium", tag: "FRUTAS Y VERDURAS · FRESCOS", description: "Banano fresco seleccionado, fuente natural de energía.", brand: "Frescura", unit: "1 kg", reference: "FRU-BA-001", emoji: "🍌", category: "Frutas y verduras", subcategory: "Frutas" },
   { id: "SKU 00674", name: "Detergente líquido", tag: "LIMPIEZA · HOGAR", description: "Limpieza profunda para ropa blanca y de color.", brand: "Ariel", unit: "1.8 litros", reference: "ARI-DL-18", emoji: "🧴", category: "Limpieza", subcategory: "Hogar" },
   { id: "SKU 00902", name: "Galletas de avena", tag: "SNACKS · DESPENSA", description: "Galletas horneadas con avena integral y miel.", brand: "Festival", unit: "12 unidades", reference: "FES-GA-012", emoji: "🍪", category: "Despensa", subcategory: "Snacks" },
-  { id: "SKU 00347", name: "Jabón de manos", tag: "CUIDADO PERSONAL · BAÑO", description: "Fórmula suave con aloe vera para uso diario.", brand: "Palmolive", unit: "250 ml", reference: "PAL-JM-250", emoji: "🧼", category: "Cuidado personal", subcategory: "Baño" }
+  { id: "SKU 00347", name: "Jabón de manos", tag: "CUIDADO PERSONAL · BAÑO", description: "Fórmula suave con aloe vera para uso diario.", brand: "Palmolive", unit: "250 ml", reference: "PAL-JM-250", emoji: "🧼", category: "Cuidado personal", subcategory: "Baño" },
+  { id: "SKU 00718", name: "Tomate chonto", tag: "FRUTAS Y VERDURAS · FRESCOS", description: "Tomates maduros, firmes y listos para tus comidas.", brand: "Frescura", unit: "500 g", reference: "FRU-TO-500", emoji: "🍅", category: "Frutas y verduras", subcategory: "Verduras" },
+  { id: "SKU 00526", name: "Arroz blanco", tag: "DESPENSA · GRANOS", description: "Arroz blanco de grano largo para acompañar cada receta.", brand: "Diana", unit: "1 kg", reference: "DIA-AR-001", emoji: "🍚", category: "Despensa", subcategory: "Granos" },
+  { id: "SKU 00164", name: "Crema dental", tag: "CUIDADO PERSONAL · HIGIENE", description: "Protección anticaries con sensación de frescura duradera.", brand: "Colgate", unit: "75 ml", reference: "COL-CD-075", emoji: "🪥", category: "Cuidado personal", subcategory: "Higiene" },
+  { id: "SKU 00876", name: "Agua con gas", tag: "BEBIDAS · REFRIGERADO", description: "Agua mineral con gas, ligera y refrescante.", brand: "Brisa", unit: "600 ml", reference: "BRI-AG-600", emoji: "🫧", category: "Bebidas", subcategory: "Frías" }
 ];
 const categories = [
   { name: "Lácteos", hint: "Fríos y frescos", icon: "🥛" },
   { name: "Despensa", hint: "Secos y bebidas", icon: "◒" },
   { name: "Frutas y verduras", hint: "Frescos", icon: "🍎" },
   { name: "Limpieza", hint: "Hogar", icon: "✦" },
-  { name: "Cuidado personal", hint: "Baño y cuerpo", icon: "✧" }
+  { name: "Cuidado personal", hint: "Baño y cuerpo", icon: "✧" },
+  { name: "Bebidas", hint: "Frías y listas", icon: "◌" }
 ];
 const players = [
   { initials: "LU", name: "Lucía M.", points: 1480, time: "08.42s" },
@@ -38,7 +43,7 @@ function renderCategories() {
 function renderLeaderboard() {
   const ranking = [...players].sort((a, b) => b.points - a.points);
   const position = ranking.findIndex((player) => player.me) + 1;
-  $("#leaderboard").innerHTML = ranking.map((player, index) => `<div class="leader-row ${player.me ? "me" : ""}"><small>${String(index + 1).padStart(2, "0")}</small><span class="leader-avatar">${player.initials}</span><span>${player.name}</span><b>${player.points.toLocaleString("es-CO")}</b><small>${player.time}</small></div>`).join("");
+  $("#leaderboard").innerHTML = ranking.map((player, index) => `<div class="leader-row ${player.me ? "me" : ""}" role="listitem" aria-label="${player.name}, posición ${index + 1}, ${player.points.toLocaleString("es-CO")} puntos"><small>${String(index + 1).padStart(2, "0")}</small><span class="leader-avatar" aria-hidden="true">${player.initials}</span><span>${player.name}${player.me ? " (tú)" : ""}</span><b>${player.points.toLocaleString("es-CO")}</b><small>${player.time}</small></div>`).join("");
   $("#your-score").textContent = `${score.toLocaleString("es-CO")} pts`;
   $("#your-position").textContent = position;
 }
@@ -161,5 +166,15 @@ startTimer();
 $("#skip-button").addEventListener("click", skip);
 $("#restart-button").addEventListener("click", restartGame);
 $("#theme-toggle").addEventListener("click", () => applyTheme(!document.body.classList.contains("dark-mode")));
+$("#copy-room-button").addEventListener("click", async () => {
+  const roomCode = "MANGO-42";
+  try {
+    await navigator.clipboard.writeText(roomCode);
+    $("#room-status").textContent = "CÓDIGO COPIADO";
+  } catch {
+    $("#room-status").textContent = `CÓDIGO ${roomCode}`;
+  }
+  setTimeout(() => { $("#room-status").textContent = `CÓDIGO ${roomCode}`; }, 1800);
+});
 applyTheme(localStorage.getItem("shelf-sprint-theme") === "dark");
 document.addEventListener("keydown", (event) => { if (event.code === "Space") { event.preventDefault(); skip(); } });

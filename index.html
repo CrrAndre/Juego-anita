@@ -17,7 +17,9 @@
           <span class="brand-mark" aria-hidden="true">SS</span>
           <span><strong>SHELF</strong><small>SPRINT</small></span>
         </a>
-        <div class="room-pill"><span class="pulse-dot"></span><span id="room-status">SALA #MANGO-42</span><b>3/8</b></div>
+        <button class="room-pill" id="copy-room-button" type="button" aria-label="Copiar código de partida MANGO-42">
+          <span class="pulse-dot"></span><span id="room-status">CÓDIGO MANGO-42</span><b>3/8</b><span class="copy-room-icon" aria-hidden="true">⧉</span>
+        </button>
         <div class="header-actions">
           <button class="icon-button" id="theme-toggle" type="button" aria-label="Activar modo oscuro" aria-pressed="false">☾</button>
           <button class="avatar" type="button" aria-label="Abrir perfil">AN</button>
@@ -35,7 +37,8 @@
           </div>
           <div class="scoreboard-panel">
             <div class="panel-label"><span>Clasificación en vivo</span><span class="live-tag">EN VIVO</span></div>
-            <div id="leaderboard" class="leaderboard"></div>
+            <p class="leaderboard-help">Tu posición se actualiza después de cada respuesta.</p>
+            <div id="leaderboard" class="leaderboard" role="list" aria-live="polite" aria-label="Clasificación de la sala"></div>
             <div class="your-score"><span>Tu posición</span><strong>#<span id="your-position">3</span></strong><b id="your-score">1.240 pts</b></div>
           </div>
         </section>
