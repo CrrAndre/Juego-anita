@@ -40,6 +40,8 @@ let currentUser = "Tú";
 let remoteRoomId = null;
 let remotePlayerId = null;
 let playersSubscription = null;
+let isRoomHost = false;
+const mistakeCounts = {};
 
 function getInitials(name) {
   return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
@@ -75,6 +77,7 @@ async function joinRoom(event) {
       ? await ShelfBackend.createRoom(username, getInitials(username))
       : await ShelfBackend.joinRoom(roomCode, username, getInitials(username));
     currentUser = username;
+    isRoomHost = action === "create";
     joinedRoomCode = membership.room_code || roomCode;
     remoteRoomId = membership.room_id || null;
     remotePlayerId = membership.player_id || null;
@@ -84,6 +87,7 @@ async function joinRoom(event) {
       playersSubscription?.unsubscribe();
       playersSubscription = ShelfBackend.subscribePlayers(remoteRoomId, async () => {
         updatePlayersFromRemote(await ShelfBackend.loadPlayers(remoteRoomId));
+        if (isRoomHost) renderHostDashboard();
       });
     }
   } catch (joinError) {
@@ -101,6 +105,7 @@ async function joinRoom(event) {
       players.push({ initials: getInitials(username), name: username, points: 0, time: "—", me: true });
     }
   }
+  if (isRoomHost) renderHostDashboard();
   $("#room-status").textContent = `CÓDIGO ${joinedRoomCode}`;
   $("#copy-room-button").setAttribute("aria-label", `Copiar código de partida ${joinedRoomCode}`);
   $(".avatar").textContent = getInitials(username);
@@ -109,10 +114,41 @@ async function joinRoom(event) {
   document.body.classList.remove("joining");
   $("#top").hidden = false;
   error.textContent = "";
+  if (isRoomHost) {
+    $("#host-dashboard").hidden = false;
+    $(".hero-grid").hidden = true;
+    $(".game-section").hidden = true;
+    $(".how-section").hidden = true;
+    renderHostDashboard();
+  }
   renderCategories();
   renderLeaderboard();
   renderProduct();
-  startTimer();
+  if (!isRoomHost) startTimer();
+}
+
+function renderHostDashboard() {
+  $("#host-room-code").textContent = joinedRoomCode;
+  $("#dashboard-player-count").textContent = players.length;
+  $("#host-players").innerHTML = players
+    .sort((a, b) => b.points - a.points)
+    .map((player) => `<div class="host-player-row" role="listitem"><span class="leader-avatar">${player.initials}</span><span>${player.name}${player.me ? " <small>(anfitrión)</small>" : ""}</span><b>${player.points.toLocaleString("es-CO")} pts</b></div>`)
+    .join("");
+  const mistakes = Object.entries(mistakeCounts).sort(([, a], [, b]) => b - a);
+  const totalAnswers = Object.values(mistakeCounts).reduce((sum, count) => sum + count, 0) + correctAnswers;
+  $("#dashboard-answers").textContent = totalAnswers;
+  $("#dashboard-correct").textContent = totalAnswers ? `${Math.round((correctAnswers / totalAnswers) * 100)}%` : "0%";
+  $("#dashboard-wrong").textContent = mistakes.reduce((sum, [, count]) => sum + count, 0);
+  $("#mistake-list").innerHTML = mistakes.length
+    ? mistakes.map(([category, count]) => `<div class="mistake-row"><span>${category}</span><b>${count} error${count === 1 ? "" : "es"}</b></div>`).join("")
+    : "<p class=\"dashboard-empty\">Todavía no hay errores registrados.</p>";
+}
+
+function startHostGame() {
+  $("#host-dashboard").hidden = true;
+  $(".hero-grid").hidden = false;
+  $(".game-section").hidden = false;
+  $(".how-section").hidden = false;
 }
 
 function updatePlayersFromRemote(remotePlayers) {
@@ -193,7 +229,7 @@ function answer(category) {
   const timeBonus = Math.max(0, seconds * 5);
   const points = correct ? 100 + timeBonus : 0;
   const feedback = $("#feedback");
-  if (correct) { score += points; correctAnswers += 1; streak += 1; feedback.textContent = `✓ ¡Correcto! +${points} puntos · ${seconds}s restantes`; feedback.className = "feedback correct"; } else { streak = 0; feedback.textContent = category === "__skipped__" ? `↷ Producto saltado. Era ${product.category}.` : `× Casi. Era ${product.category}. Respira y sigue.`; feedback.className = "feedback wrong"; }
+  if (correct) { score += points; correctAnswers += 1; streak += 1; feedback.textContent = `✓ ¡Correcto! +${points} puntos · ${seconds}s restantes`; feedback.className = "feedback correct"; } else { streak = 0; mistakeCounts[product.category] = (mistakeCounts[product.category] || 0) + 1; feedback.textContent = category === "__skipped__" ? `↷ Producto saltado. Era ${product.category}.` : `× Casi. Era ${product.category}. Respira y sigue.`; feedback.className = "feedback wrong"; }
   showFeedbackAnimation(correct, category);
   $("#streak-value").textContent = streak;
   const currentPlayer = players.find((player) => player.me);
@@ -202,6 +238,7 @@ function answer(category) {
     currentPlayer.time = `${(12 - seconds + 1).toFixed(2)}s`;
   }
   renderLeaderboard();
+  if (isRoomHost) renderHostDashboard();
   productIndex += 1;
   $("#round-progress").textContent = `${String(Math.min(totalRounds, productIndex + 1)).padStart(2, "0")} / ${totalRounds}`;
   $("#round-progress-fill").style.width = `${Math.min(100, ((productIndex + 1) / totalRounds) * 100)}%`;
@@ -237,6 +274,7 @@ function restartGame() {
   score = 0;
   streak = 0;
   correctAnswers = 0;
+  Object.keys(mistakeCounts).forEach((category) => { delete mistakeCounts[category]; });
   gameOver = false;
   const currentPlayer = players.find((player) => player.me);
   if (currentPlayer) {
@@ -260,6 +298,7 @@ function applyTheme(isDark) {
 }
 
 $("#join-form").addEventListener("submit", joinRoom);
+$("#start-game-button").addEventListener("click", startHostGame);
 $("#skip-button").addEventListener("click", skip);
 $("#restart-button").addEventListener("click", restartGame);
 $("#theme-toggle").addEventListener("click", () => applyTheme(!document.body.classList.contains("dark-mode")));
@@ -272,6 +311,15 @@ $("#copy-room-button").addEventListener("click", async () => {
     $("#room-status").textContent = `CÓDIGO ${roomCode}`;
   }
   setTimeout(() => { $("#room-status").textContent = `CÓDIGO ${roomCode}`; }, 1800);
+});
+$("#copy-dashboard-code").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(joinedRoomCode);
+    $("#copy-dashboard-code").textContent = "Código copiado";
+  } catch {
+    $("#copy-dashboard-code").textContent = joinedRoomCode;
+  }
+  setTimeout(() => { $("#copy-dashboard-code").textContent = "Copiar código"; }, 1800);
 });
 applyTheme(localStorage.getItem("shelf-sprint-theme") === "dark");
 document.addEventListener("keydown", (event) => { if (event.code === "Space") { event.preventDefault(); skip(); } });

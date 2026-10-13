@@ -47,6 +47,40 @@
       </header>
 
       <main id="top" hidden>
+        <section class="host-dashboard" id="host-dashboard" hidden aria-labelledby="host-dashboard-title">
+          <div class="dashboard-heading">
+            <div>
+              <p class="eyebrow"><span class="eyebrow-line"></span>Panel del anfitrión</p>
+              <h2 id="host-dashboard-title">Controla tu <em>sala.</em></h2>
+              <p class="dashboard-intro">Comparte el código, espera a tu equipo y revisa su desempeño en tiempo real.</p>
+            </div>
+            <div class="host-code-card">
+              <span>CÓDIGO DE SALA</span>
+              <strong id="host-room-code">—</strong>
+              <button class="copy-dashboard-button" id="copy-dashboard-code" type="button">Copiar código</button>
+            </div>
+          </div>
+          <div class="dashboard-grid">
+            <article class="dashboard-card">
+              <div class="dashboard-card-heading"><span>Jugadores conectados</span><b id="dashboard-player-count">1</b></div>
+              <div class="host-players" id="host-players" role="list"></div>
+            </article>
+            <article class="dashboard-card">
+              <div class="dashboard-card-heading"><span>Resumen de la sala</span><span class="live-tag">EN VIVO</span></div>
+              <div class="dashboard-stats">
+                <div><span>Respuestas</span><strong id="dashboard-answers">0</strong></div>
+                <div><span>Aciertos</span><strong id="dashboard-correct">0%</strong></div>
+                <div><span>Errores</span><strong id="dashboard-wrong">0</strong></div>
+              </div>
+              <h3>Donde más se equivocan</h3>
+              <div class="mistake-list" id="mistake-list"></div>
+            </article>
+          </div>
+          <div class="dashboard-actions">
+            <button class="join-button" id="start-game-button" type="button">Iniciar partida <span>↗</span></button>
+            <p><span class="pulse-dot"></span> Los jugadores pueden unirse mientras compartes el código.</p>
+          </div>
+        </section>
         <section class="hero-grid">
           <div class="intro-copy">
             <p class="eyebrow"><span class="eyebrow-line"></span><span id="round-label">Ronda 01 / 10</span></p>
