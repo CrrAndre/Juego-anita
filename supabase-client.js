@@ -88,6 +88,12 @@
     if (error) throw new Error(error.message);
   }
 
+  async function leaveRoom(playerId) {
+    if (!client || !playerId) return;
+    const { error } = await client.rpc("leave_room", { p_player_id: playerId });
+    if (error) throw new Error(error.message);
+  }
+
   function subscribeRoom(roomId, onChange) {
     if (!client) return null;
     return client
@@ -107,6 +113,7 @@
     createRoom,
     startRoom,
     recordPlayerResult,
+    leaveRoom,
     loadRoom,
     loadPlayers,
     subscribePlayers,

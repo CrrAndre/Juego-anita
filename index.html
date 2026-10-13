@@ -55,7 +55,13 @@
         </button>
         <div class="header-actions">
           <button class="icon-button" id="theme-toggle" type="button" aria-label="Activar modo oscuro" aria-pressed="false">☾</button>
-          <button class="avatar" type="button" aria-label="Abrir perfil">AN</button>
+          <div class="profile-menu">
+            <button class="avatar" id="profile-button" type="button" aria-label="Abrir perfil" aria-expanded="false" aria-controls="profile-dropdown">AN</button>
+            <div class="profile-dropdown" id="profile-dropdown" hidden>
+              <div class="profile-summary"><span class="profile-emoji" id="profile-emoji">🦊</span><span><strong id="profile-name">Jugador</strong><small id="profile-room">Sin sala</small></span></div>
+              <button class="profile-menu-item profile-exit" id="leave-room-button" type="button">Salir de la sala <span>↗</span></button>
+            </div>
+          </div>
         </div>
       </header>
 

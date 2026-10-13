@@ -194,6 +194,9 @@ async function joinRoom(event) {
   $("#copy-room-button").setAttribute("aria-label", `Copiar código de partida ${joinedRoomCode}`);
   $(".avatar").textContent = getSelectedAvatar();
   $(".avatar").setAttribute("aria-label", `Perfil de ${username}`);
+  $("#profile-emoji").textContent = getSelectedAvatar();
+  $("#profile-name").textContent = username;
+  $("#profile-room").textContent = `Sala ${joinedRoomCode}`;
   $("#join-screen").hidden = true;
   document.body.classList.remove("joining");
   $("#top").hidden = false;
@@ -495,6 +498,46 @@ function applyTheme(isDark) {
   localStorage.setItem("shelf-sprint-theme", isDark ? "dark" : "light");
 }
 
+function closeProfileMenu() {
+  $("#profile-dropdown").hidden = true;
+  $("#profile-button").setAttribute("aria-expanded", "false");
+}
+
+async function leaveRoom() {
+  const leaveButton = $("#leave-room-button");
+  leaveButton.disabled = true;
+  leaveButton.textContent = "Saliendo…";
+  try {
+    await ShelfBackend.leaveRoom(remotePlayerId);
+  } catch (leaveError) {
+    console.error("No se pudo salir de la sala remota:", leaveError);
+  }
+  clearInterval(timerId);
+  clearInterval(cooldownTimerId);
+  clearInterval(roomPollId);
+  playersSubscription?.unsubscribe();
+  roomSubscription?.unsubscribe();
+  playersSubscription = null;
+  roomSubscription = null;
+  roomPollId = null;
+  remoteRoomId = null;
+  remotePlayerId = null;
+  isRoomHost = false;
+  gameOver = false;
+  locked = false;
+  closeProfileMenu();
+  $("#profile-name").textContent = "Jugador";
+  $("#profile-room").textContent = "Sin sala";
+  $("#join-screen").hidden = false;
+  $("#top").hidden = true;
+  document.body.classList.add("joining");
+  leaveButton.disabled = false;
+  leaveButton.innerHTML = 'Salir de la sala <span>↗</span>';
+  $("#join-error").textContent = "";
+  document.querySelectorAll(".room-action-button").forEach((button) => { button.disabled = false; });
+  $("#username").focus();
+}
+
 document.querySelectorAll(".room-action-button").forEach((button) => {
   button.addEventListener("click", () => { requestedAction = button.dataset.action; });
 });
@@ -518,6 +561,16 @@ document.querySelectorAll(".leaderboard-tab").forEach((button) => {
 $("#skip-button").addEventListener("click", skip);
 $("#restart-button").addEventListener("click", restartGame);
 $("#theme-toggle").addEventListener("click", () => applyTheme(!document.body.classList.contains("dark-mode")));
+$("#profile-button").addEventListener("click", () => {
+  const dropdown = $("#profile-dropdown");
+  const isOpen = !dropdown.hidden;
+  dropdown.hidden = isOpen;
+  $("#profile-button").setAttribute("aria-expanded", String(!isOpen));
+});
+$("#leave-room-button").addEventListener("click", leaveRoom);
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".profile-menu")) closeProfileMenu();
+});
 $("#copy-room-button").addEventListener("click", async () => {
   const roomCode = joinedRoomCode;
   try {
@@ -538,4 +591,7 @@ $("#copy-dashboard-code").addEventListener("click", async () => {
   setTimeout(() => { $("#copy-dashboard-code").textContent = "Copiar código"; }, 1800);
 });
 applyTheme(localStorage.getItem("shelf-sprint-theme") === "dark");
-document.addEventListener("keydown", (event) => { if (event.code === "Space") { event.preventDefault(); skip(); } });
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeProfileMenu();
+  if (event.code === "Space") { event.preventDefault(); skip(); }
+});

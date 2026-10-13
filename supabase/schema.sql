@@ -258,6 +258,20 @@ $$;
 revoke all on function public.record_player_result(uuid, integer, boolean) from public;
 grant execute on function public.record_player_result(uuid, integer, boolean) to anon, authenticated;
 
+create or replace function public.leave_room(p_player_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  delete from public.players where id = p_player_id;
+end;
+$$;
+
+revoke all on function public.leave_room(uuid) from public;
+grant execute on function public.leave_room(uuid) to anon, authenticated;
+
 -- Realtime: algunas cuentas no muestran el selector en el Dashboard.
 -- Este bloque agrega las tablas a la publicación sin duplicarlas.
 do $$
