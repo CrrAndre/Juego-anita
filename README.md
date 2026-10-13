@@ -29,6 +29,7 @@ Después abre `http://localhost:4173`.
 - Pantalla final con puntaje, aciertos, posición y botón para jugar otra vez.
 - Modo oscuro persistente mediante el botón de tema.
 - Ranking de la sala actualizado mientras juegas.
+- En salas remotas, todos los jugadores comparten la misma tarjeta, ronda y contador global de 10 segundos.
 - Animaciones ligeras para producto, progreso y feedback.
 - Estilo visual liquid glass retro-moderno con efectos de tilt, ripple y transiciones centralizadas en `animations.js`.
 - Configuración mínima de Netlify en `netlify.toml`.

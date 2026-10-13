@@ -51,7 +51,7 @@
     if (!client) return { status: "waiting" };
     const { data, error } = await client
       .from("rooms")
-      .select("id, status, current_round, total_rounds")
+      .select("id, status, current_round, total_rounds, round_started_at")
       .eq("id", roomId)
       .single();
     if (error) throw new Error(error.message);
@@ -76,6 +76,13 @@
     const { data, error } = await client.rpc("start_room", { p_room_id: roomId });
     if (error) throw new Error(error.message);
     return { mode: "remote", ...(Array.isArray(data) ? data[0] : data) };
+  }
+
+  async function advanceRoomRound(roomId) {
+    if (!client || !roomId) return null;
+    const { data, error } = await client.rpc("advance_room_round", { p_room_id: roomId });
+    if (error) throw new Error(error.message);
+    return Array.isArray(data) ? data[0] : data;
   }
 
   async function recordPlayerResult(playerId, responseMs, isCorrect) {
@@ -112,6 +119,7 @@
     joinRoom,
     createRoom,
     startRoom,
+    advanceRoomRound,
     recordPlayerResult,
     leaveRoom,
     loadRoom,

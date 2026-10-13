@@ -78,6 +78,8 @@ let joinedRoomCode = "MANGO-42";
 let currentUser = "Tú";
 let remoteRoomId = null;
 let remotePlayerId = null;
+let remoteRoundStartedAt = null;
+let remoteAdvancePending = false;
 let playersSubscription = null;
 let roomSubscription = null;
 let roomPollId = null;
@@ -112,9 +114,47 @@ function showGame() {
   startTimer();
 }
 
+function syncRemoteRoom(room) {
+  if (!room || room.status !== "playing" || !room.round_started_at) return;
+  const nextProductIndex = Math.max(0, Math.min(totalRounds - 1, room.current_round - 1));
+  const roundChanged = productIndex !== nextProductIndex;
+  remoteRoundStartedAt = room.round_started_at;
+  if (roundChanged) {
+    productIndex = nextProductIndex;
+    locked = false;
+    renderProduct();
+  }
+  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - Date.parse(remoteRoundStartedAt)) / 1000));
+  seconds = Math.max(0, 10 - elapsedSeconds);
+  updateTimer();
+  if (seconds <= 0) advanceRemoteRound();
+  else startTimer();
+}
+
+async function advanceRemoteRound() {
+  if (!remoteRoomId || remoteAdvancePending || gameOver) return;
+  remoteAdvancePending = true;
+  try {
+    const room = await ShelfBackend.advanceRoomRound(remoteRoomId);
+    if (room?.status === "finished") {
+      endGame();
+    } else if (room) {
+      syncRemoteRoom(room);
+    }
+  } catch (advanceError) {
+    console.error("No se pudo sincronizar la siguiente ronda:", advanceError);
+  } finally {
+    remoteAdvancePending = false;
+  }
+}
+
 async function handleRoomUpdate(payload) {
-  if (payload.new?.status !== "playing" || gameOver) return;
-  showGame();
+  if (gameOver) return;
+  if (payload.new?.status === "playing") {
+    syncRemoteRoom(payload.new);
+  } else if (payload.new?.status === "finished") {
+    endGame();
+  }
 }
 
 async function joinRoom(event) {
@@ -151,9 +191,10 @@ async function joinRoom(event) {
     joinedRoomCode = membership.room_code || roomCode;
     remoteRoomId = membership.room_id || null;
     remotePlayerId = membership.player_id || null;
+    let room = null;
     if (membership.mode === "remote") {
       const remotePlayers = await ShelfBackend.loadPlayers(remoteRoomId);
-      const room = await ShelfBackend.loadRoom(remoteRoomId);
+      room = await ShelfBackend.loadRoom(remoteRoomId);
       updatePlayersFromRemote(remotePlayers);
       playersSubscription?.unsubscribe();
       playersSubscription = ShelfBackend.subscribePlayers(remoteRoomId, async () => {
@@ -167,12 +208,13 @@ async function joinRoom(event) {
         if (gameOver || !remoteRoomId) return;
         try {
           const currentRoom = await ShelfBackend.loadRoom(remoteRoomId);
-          if (!isRoomHost && currentRoom.status === "playing") showGame();
+          if (currentRoom.status === "playing") syncRemoteRoom(currentRoom);
+          else if (currentRoom.status === "finished") endGame();
         } catch (roomError) {
           console.error("No se pudo consultar el estado de la sala:", roomError);
         }
       }, 2000);
-      if (!isRoomHost && room.status === "playing") showGame();
+      if (!isRoomHost && room.status === "playing") syncRemoteRoom(room);
     }
   } catch (joinError) {
     error.textContent = joinError.message || "No fue posible entrar a la sala.";
@@ -214,6 +256,7 @@ async function joinRoom(event) {
   renderLeaderboard();
   renderProduct();
   if (!isRoomHost && !document.querySelector("#waiting-room:not([hidden])")) startTimer();
+  if (membership.mode === "remote" && room?.status === "playing") syncRemoteRoom(room);
 }
 
 function renderHostDashboard() {
@@ -244,11 +287,15 @@ async function startHostGame() {
   button.innerHTML = "Iniciando…";
   try {
     if (remoteRoomId) {
-      await ShelfBackend.startRoom(remoteRoomId);
+      const startedRoom = await ShelfBackend.startRoom(remoteRoomId);
+      syncRemoteRoom(startedRoom);
     } else {
       showGame();
     }
-    if (remoteRoomId) showGame();
+    if (remoteRoomId) {
+      showGame();
+      syncRemoteRoom(await ShelfBackend.loadRoom(remoteRoomId));
+    }
   } catch (startError) {
     button.disabled = false;
     button.innerHTML = "Iniciar partida <span>↗</span>";
@@ -440,6 +487,9 @@ function answer(category) {
   }
   renderLeaderboard();
   if (isRoomHost) renderHostDashboard();
+  if (remoteRoomId) {
+    return;
+  }
   productIndex += 1;
   $("#round-progress").textContent = `${String(Math.min(totalRounds, productIndex + 1)).padStart(2, "0")} / ${totalRounds}`;
   $("#round-progress-fill").style.width = `${Math.min(100, ((productIndex + 1) / totalRounds) * 100)}%`;
@@ -464,7 +514,19 @@ function startCooldown() {
     }
   }, 1000);
 }
-function tick() { if (locked) return; seconds -= 1; updateTimer(); if (seconds <= 0) answer("__timeout__"); }
+function tick() {
+  if (remoteRoomId) {
+    const elapsedSeconds = Math.max(0, Math.floor((Date.now() - Date.parse(remoteRoundStartedAt)) / 1000));
+    seconds = Math.max(0, 10 - elapsedSeconds);
+    updateTimer();
+    if (seconds <= 0) advanceRemoteRound();
+    return;
+  }
+  if (locked) return;
+  seconds -= 1;
+  updateTimer();
+  if (seconds <= 0) answer("__timeout__");
+}
 function skip() { if (!locked && !gameOver) { answer("__skipped__"); } }
 function startTimer() { clearInterval(timerId); timerId = setInterval(tick, 1000); }
 function endGame() {
@@ -537,6 +599,8 @@ async function leaveRoom() {
   roomPollId = null;
   remoteRoomId = null;
   remotePlayerId = null;
+  remoteRoundStartedAt = null;
+  remoteAdvancePending = false;
   isRoomHost = false;
   gameOver = false;
   locked = false;

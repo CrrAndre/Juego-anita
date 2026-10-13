@@ -8,10 +8,12 @@ create table if not exists public.rooms (
   status text not null default 'waiting' check (status in ('waiting', 'playing', 'finished')),
   current_round smallint not null default 1,
   total_rounds smallint not null default 20,
+  round_started_at timestamptz,
   created_at timestamptz not null default now()
 );
 
 alter table public.rooms alter column total_rounds set default 20;
+alter table public.rooms add column if not exists round_started_at timestamptz;
 update public.rooms set total_rounds = 20 where status = 'waiting';
 
 create table if not exists public.players (
@@ -213,7 +215,9 @@ declare
   started_room public.rooms%rowtype;
 begin
   update public.rooms
-     set status = 'playing'
+     set status = 'playing',
+         current_round = 1,
+         round_started_at = now()
    where id = p_room_id
      and status = 'waiting'
    returning * into started_room;
@@ -228,6 +232,57 @@ $$;
 
 revoke all on function public.start_room(uuid) from public;
 grant execute on function public.start_room(uuid) to anon, authenticated;
+
+create or replace function public.advance_room_round(p_room_id uuid)
+returns public.rooms
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_room public.rooms%rowtype;
+  advanced_room public.rooms%rowtype;
+begin
+  select * into current_room
+    from public.rooms
+   where id = p_room_id
+   for update;
+
+  if current_room.id is null then
+    raise exception 'La sala no existe.';
+  end if;
+
+  if current_room.status <> 'playing' then
+    return current_room;
+  end if;
+
+  if current_room.round_started_at is not null
+     and now() < current_room.round_started_at + interval '10 seconds' then
+    return current_room;
+  end if;
+
+  update public.rooms
+     set current_round = case
+           when current_round >= total_rounds then current_round
+           else current_round + 1
+         end,
+         status = case
+           when current_round >= total_rounds then 'finished'
+           else status
+         end,
+         round_started_at = case
+           when current_round >= total_rounds then round_started_at
+           else now()
+         end
+   where id = p_room_id
+   returning * into advanced_room;
+
+  return advanced_room;
+end;
+$$;
+
+revoke all on function public.advance_room_round(uuid) from public;
+grant execute on function public.advance_room_round(uuid) to anon, authenticated;
 
 create or replace function public.record_player_result(
   p_player_id uuid,
