@@ -10,8 +10,25 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
+  <body class="joining">
     <div class="app-shell">
+      <section class="join-screen" id="join-screen" aria-labelledby="join-title">
+        <div class="join-card">
+          <div class="join-brand"><span class="brand-mark" aria-hidden="true">SS</span><span>SHELF / SPRINT</span></div>
+          <p class="eyebrow"><span class="eyebrow-line"></span>Partida multijugador</p>
+          <h1 id="join-title">Entra a la<br /><em>góndola.</em></h1>
+          <p class="join-intro">Elige cómo aparecerás en la clasificación y usa el código que te compartió el anfitrión.</p>
+          <form class="join-form" id="join-form" novalidate>
+            <label for="username">Tu usuario <span>2–18 caracteres</span></label>
+            <input id="username" name="username" type="text" minlength="2" maxlength="18" autocomplete="nickname" placeholder="Ej. AnitaGamer" required />
+            <label for="room-code">Código de la sala <span>Ej. MANGO-42</span></label>
+            <div class="room-input-wrap"><span aria-hidden="true">#</span><input id="room-code" name="room-code" type="text" minlength="4" maxlength="12" pattern="[A-Za-z0-9-]+" autocomplete="off" placeholder="MANGO-42" required /></div>
+            <p class="join-error" id="join-error" role="alert" aria-live="polite"></p>
+            <button class="join-button" type="submit">Entrar a la sala <span>↗</span></button>
+          </form>
+          <p class="join-note"><span class="pulse-dot"></span> Las partidas se sincronizan por código.</p>
+        </div>
+      </section>
       <header class="topbar">
         <a class="brand" href="#top" aria-label="Shelf Sprint inicio">
           <span class="brand-mark" aria-hidden="true">SS</span>
@@ -26,7 +43,7 @@
         </div>
       </header>
 
-      <main id="top">
+      <main id="top" hidden>
         <section class="hero-grid">
           <div class="intro-copy">
             <p class="eyebrow"><span class="eyebrow-line"></span><span id="round-label">Ronda 01 / 10</span></p>
@@ -95,6 +112,10 @@
         <button class="restart-button" id="restart-button" type="button">Jugar otra vez <span>↗</span></button>
       </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="supabase-client.js"></script>
+    <script src="animations.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

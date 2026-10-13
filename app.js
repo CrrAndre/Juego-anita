@@ -35,6 +35,96 @@ let gameOver = false;
 const totalRounds = 10;
 const $ = (selector) => document.querySelector(selector);
 let feedbackAnimationId;
+let joinedRoomCode = "MANGO-42";
+let currentUser = "Tú";
+let remoteRoomId = null;
+let remotePlayerId = null;
+let playersSubscription = null;
+
+function getInitials(name) {
+  return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+}
+
+async function joinRoom(event) {
+  event.preventDefault();
+  const usernameInput = $("#username");
+  const roomInput = $("#room-code");
+  const error = $("#join-error");
+  const username = usernameInput.value.trim();
+  const roomCode = roomInput.value.trim().toUpperCase();
+
+  if (username.length < 2 || username.length > 18) {
+    error.textContent = "Escribe un usuario entre 2 y 18 caracteres.";
+    usernameInput.focus();
+    return;
+  }
+  if (!/^[A-Z0-9-]{4,12}$/.test(roomCode)) {
+    error.textContent = "Usa un código válido, por ejemplo MANGO-42.";
+    roomInput.focus();
+    return;
+  }
+
+  const submitButton = event.submitter;
+  submitButton.disabled = true;
+  error.textContent = ShelfBackend.isConfigured ? "Verificando la sala..." : "";
+  try {
+    const membership = await ShelfBackend.joinRoom(roomCode, username, getInitials(username));
+    currentUser = username;
+    joinedRoomCode = roomCode;
+    remoteRoomId = membership.room_id || null;
+    remotePlayerId = membership.player_id || null;
+    if (membership.mode === "remote") {
+      const remotePlayers = await ShelfBackend.loadPlayers(remoteRoomId);
+      updatePlayersFromRemote(remotePlayers);
+      playersSubscription?.unsubscribe();
+      playersSubscription = ShelfBackend.subscribePlayers(remoteRoomId, async () => {
+        updatePlayersFromRemote(await ShelfBackend.loadPlayers(remoteRoomId));
+      });
+    }
+  } catch (joinError) {
+    error.textContent = joinError.message || "No fue posible entrar a la sala.";
+    submitButton.disabled = false;
+    return;
+  }
+  submitButton.disabled = false;
+  if (membership.mode === "local") {
+    players.forEach((player) => { player.me = false; });
+    const localPlayer = players.find((player) => player.name === "Tú");
+    if (localPlayer) {
+      Object.assign(localPlayer, { initials: getInitials(username), name: username, points: 0, time: "—", me: true });
+    } else {
+      players.push({ initials: getInitials(username), name: username, points: 0, time: "—", me: true });
+    }
+  }
+  $("#room-status").textContent = `CÓDIGO ${joinedRoomCode}`;
+  $("#copy-room-button").setAttribute("aria-label", `Copiar código de partida ${joinedRoomCode}`);
+  $(".avatar").textContent = getInitials(username);
+  $(".avatar").setAttribute("aria-label", `Perfil de ${username}`);
+  $("#join-screen").hidden = true;
+  document.body.classList.remove("joining");
+  $("#top").hidden = false;
+  error.textContent = "";
+  renderCategories();
+  renderLeaderboard();
+  renderProduct();
+  startTimer();
+}
+
+function updatePlayersFromRemote(remotePlayers) {
+  const activePlayer = remotePlayers.find((player) => player.id === remotePlayerId);
+  players.length = 0;
+  remotePlayers.forEach((player) => players.push({
+    initials: player.avatar_initials,
+    name: player.display_name,
+    points: player.total_points,
+    time: player.average_response_ms ? `${(player.average_response_ms / 1000).toFixed(2)}s` : "—",
+    me: player.id === remotePlayerId
+  }));
+  if (!activePlayer) {
+    players.push({ initials: getInitials(currentUser), name: currentUser, points: score, time: "—", me: true });
+  }
+  renderLeaderboard();
+}
 
 function renderCategories() {
   $("#category-list").innerHTML = categories.map((category) => `<button class="category-button" type="button" data-category="${category.name}"><span class="cat-icon">${category.icon}</span><span><strong>${category.name}</strong><small>${category.hint}</small></span></button>`).join("");
@@ -64,7 +154,7 @@ function renderProduct() {
   $("#feedback").className = "feedback";
   $("#product-card").classList.remove("pop");
   void $("#product-card").offsetWidth;
-  $("#product-card").classList.add("pop");
+  ShelfMotion.revealProduct();
   seconds = 12;
   updateTimer();
   locked = false;
@@ -73,7 +163,6 @@ function updateTimer() { $("#timer").textContent = `00:${String(seconds).padStar
 function showFeedbackAnimation(correct, category) {
   const card = $("#product-card");
   const feedback = $("#feedback");
-  const celebration = $("#celebration");
   const selectedButton = [...document.querySelectorAll(".category-button")].find((button) => button.dataset.category === category);
   document.body.classList.remove("answer-correct", "answer-wrong");
   card.classList.remove("answer-correct", "answer-wrong");
@@ -84,11 +173,11 @@ function showFeedbackAnimation(correct, category) {
   card.classList.add(correct ? "answer-correct" : "answer-wrong");
   feedback.classList.add(correct ? "answer-correct" : "answer-wrong");
   if (selectedButton) selectedButton.classList.add(correct ? "selected-correct" : "selected-wrong");
-  celebration.classList.toggle("is-visible", correct);
+  ShelfMotion.answer(correct);
+  if (correct) ShelfMotion.celebrate();
   clearTimeout(feedbackAnimationId);
   feedbackAnimationId = setTimeout(() => {
     document.body.classList.remove("answer-correct", "answer-wrong");
-    celebration.classList.remove("is-visible");
   }, 850);
 }
 function answer(category) {
@@ -102,8 +191,11 @@ function answer(category) {
   if (correct) { score += points; correctAnswers += 1; streak += 1; feedback.textContent = `✓ ¡Correcto! +${points} puntos · ${seconds}s restantes`; feedback.className = "feedback correct"; } else { streak = 0; feedback.textContent = category === "__skipped__" ? `↷ Producto saltado. Era ${product.category}.` : `× Casi. Era ${product.category}. Respira y sigue.`; feedback.className = "feedback wrong"; }
   showFeedbackAnimation(correct, category);
   $("#streak-value").textContent = streak;
-  players[2].points = score;
-  players[2].time = `${(12 - seconds + 1).toFixed(2)}s`;
+  const currentPlayer = players.find((player) => player.me);
+  if (currentPlayer) {
+    currentPlayer.points = score;
+    currentPlayer.time = `${(12 - seconds + 1).toFixed(2)}s`;
+  }
   renderLeaderboard();
   productIndex += 1;
   $("#round-progress").textContent = `${String(Math.min(totalRounds, productIndex + 1)).padStart(2, "0")} / ${totalRounds}`;
@@ -141,8 +233,11 @@ function restartGame() {
   streak = 0;
   correctAnswers = 0;
   gameOver = false;
-  players[2].points = score;
-  players[2].time = "—";
+  const currentPlayer = players.find((player) => player.me);
+  if (currentPlayer) {
+    currentPlayer.points = score;
+    currentPlayer.time = "—";
+  }
   $("#result-modal").hidden = true;
   $("#streak-value").textContent = streak;
   $("#round-progress").textContent = `01 / ${totalRounds}`;
@@ -159,15 +254,12 @@ function applyTheme(isDark) {
   localStorage.setItem("shelf-sprint-theme", isDark ? "dark" : "light");
 }
 
-renderCategories();
-renderLeaderboard();
-renderProduct();
-startTimer();
+$("#join-form").addEventListener("submit", joinRoom);
 $("#skip-button").addEventListener("click", skip);
 $("#restart-button").addEventListener("click", restartGame);
 $("#theme-toggle").addEventListener("click", () => applyTheme(!document.body.classList.contains("dark-mode")));
 $("#copy-room-button").addEventListener("click", async () => {
-  const roomCode = "MANGO-42";
+  const roomCode = joinedRoomCode;
   try {
     await navigator.clipboard.writeText(roomCode);
     $("#room-status").textContent = "CÓDIGO COPIADO";
