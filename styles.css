@@ -246,3 +246,251 @@ body.dark-mode .your-score b, body.dark-mode .round-meta strong, body.dark-mode 
   .special-level { padding: 50px 0 70px; }
   .truth-actions { grid-template-columns: 1fr; }
 }
+
+/* Liquid glass system: one visual language shared by every game surface. */
+:root {
+  --glass-radius: 26px;
+  --glass-radius-small: 14px;
+  --glass-border: rgba(255, 255, 255, .62);
+  --glass-highlight: rgba(255, 255, 255, .82);
+  --glass-shadow: 0 24px 70px rgba(70, 83, 122, .16), 0 3px 10px rgba(70, 83, 122, .08);
+  --glass-blur: blur(22px) saturate(135%);
+}
+
+body {
+  background: #d9e3f2;
+  letter-spacing: -.01em;
+}
+
+.app-shell {
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 14% 18%, rgba(112, 228, 225, .28), transparent 26rem),
+    radial-gradient(circle at 88% 72%, rgba(255, 143, 189, .2), transparent 30rem),
+    linear-gradient(135deg, #eaf3ff 0%, #dce6f4 48%, #f5e8f2 100%);
+}
+
+.app-shell::before,
+.app-shell::after {
+  z-index: -1;
+  filter: blur(18px);
+  opacity: .72;
+}
+
+.topbar,
+.scoreboard-panel,
+.product-card,
+.category-zone,
+.result-card,
+.join-card,
+.dashboard-card,
+.host-code-card,
+.live-podium-list,
+.waiting-code,
+.inline-trivia,
+.truth-card,
+.special-level,
+.step {
+  border: 1px solid var(--glass-border);
+  background: linear-gradient(145deg, rgba(255, 255, 255, .5), rgba(255, 255, 255, .2));
+  box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.topbar {
+  border-left: 0;
+  border-right: 0;
+  background: rgba(239, 247, 255, .48);
+  box-shadow: 0 8px 30px rgba(70, 83, 122, .08), inset 0 -1px rgba(255, 255, 255, .5);
+}
+
+.join-card,
+.scoreboard-panel,
+.dashboard-card,
+.product-card,
+.category-zone,
+.result-card,
+.inline-trivia,
+.truth-card,
+.special-level {
+  border-radius: var(--glass-radius);
+}
+
+.join-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.join-card::before,
+.product-card::before,
+.scoreboard-panel::before,
+.dashboard-card::before,
+.category-zone::before,
+.inline-trivia::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(255, 255, 255, .3), transparent 34%);
+}
+
+.join-card > *,
+.product-card > *,
+.scoreboard-panel > *,
+.dashboard-card > *,
+.category-zone > *,
+.inline-trivia > * {
+  position: relative;
+  z-index: 1;
+}
+
+.room-pill,
+.icon-button,
+.avatar,
+.copy-dashboard-button,
+.leaderboard-tabs,
+.leaderboard-tab,
+.join-form input,
+.room-input-wrap,
+.avatar-options label span,
+.dashboard-stats div,
+.clue-grid div,
+.step,
+.waiting-code,
+.round-group-card {
+  border-color: rgba(255, 255, 255, .56);
+  background: rgba(255, 255, 255, .28);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .62);
+}
+
+.room-pill,
+.icon-button,
+.avatar,
+.copy-dashboard-button,
+.join-button,
+.restart-button,
+.category-button,
+.skip-button,
+.truth-button,
+.profile-menu-item,
+.leaderboard-tab {
+  transition: transform .22s ease, background .22s ease, border-color .22s ease, box-shadow .22s ease;
+}
+
+.join-button,
+.restart-button {
+  border: 1px solid rgba(255, 255, 255, .56);
+  background: linear-gradient(135deg, #766aff, #9f91ff 55%, #6bd9d5);
+  box-shadow: 0 14px 28px rgba(113, 100, 255, .22), inset 0 1px rgba(255, 255, 255, .48);
+}
+
+.join-button:hover,
+.restart-button:hover,
+.category-button:hover,
+.truth-button:hover,
+.skip-button:hover {
+  transform: translateY(-3px);
+}
+
+.join-button-secondary,
+.skip-button {
+  background: rgba(255, 255, 255, .34);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .66);
+}
+
+.category-button,
+.truth-button {
+  border: 1px solid rgba(255, 255, 255, .64);
+  background: linear-gradient(145deg, rgba(255, 255, 255, .48), rgba(255, 255, 255, .2));
+  box-shadow: 0 10px 22px rgba(75, 94, 130, .1), inset 0 1px rgba(255, 255, 255, .76);
+}
+
+.category-button:focus-visible,
+.truth-button:focus-visible,
+.join-button:focus-visible,
+.room-pill:focus-visible,
+.icon-button:focus-visible,
+.avatar:focus-visible {
+  outline: 3px solid rgba(113, 100, 255, .3);
+  outline-offset: 3px;
+}
+
+.category-heading,
+.panel-label,
+.dashboard-card-heading,
+.round-meta {
+  color: var(--muted);
+  letter-spacing: .08em;
+}
+
+.timer {
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 143, 189, .42);
+  border-radius: 99px;
+  background: rgba(255, 143, 189, .13);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .5);
+}
+
+.live-tag,
+.special-badge {
+  padding: 5px 8px;
+  border: 1px solid rgba(69, 199, 123, .25);
+  border-radius: 99px;
+  background: rgba(69, 199, 123, .1);
+  font-size: 9px;
+}
+
+.special-badge {
+  color: var(--violet);
+  border-color: rgba(113, 100, 255, .2);
+  background: rgba(113, 100, 255, .1);
+}
+
+.profile-dropdown {
+  border-radius: var(--glass-radius-small);
+  border-color: var(--glass-border);
+  background: rgba(240, 247, 255, .72);
+  box-shadow: var(--glass-shadow), inset 0 1px var(--glass-highlight);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+footer {
+  border-color: rgba(255, 255, 255, .55);
+  background: rgba(255, 255, 255, .12);
+}
+
+body.dark-mode {
+  --glass-border: rgba(190, 208, 255, .22);
+  --glass-highlight: rgba(255, 255, 255, .14);
+  --glass-shadow: 0 24px 70px rgba(0, 0, 0, .24), 0 3px 10px rgba(0, 0, 0, .16);
+}
+
+body.dark-mode .app-shell {
+  background:
+    radial-gradient(circle at 14% 18%, rgba(112, 228, 225, .12), transparent 26rem),
+    radial-gradient(circle at 88% 72%, rgba(255, 143, 189, .1), transparent 30rem),
+    linear-gradient(135deg, #171b2d 0%, #24213c 50%, #302038 100%);
+}
+
+body.dark-mode .topbar,
+body.dark-mode .profile-dropdown {
+  background: rgba(25, 32, 56, .68);
+}
+
+@media (max-width: 760px) {
+  .join-card,
+  .scoreboard-panel,
+  .product-card,
+  .category-zone,
+  .dashboard-card,
+  .inline-trivia,
+  .truth-card {
+    border-radius: 20px;
+  }
+
+  .topbar {
+    background: rgba(239, 247, 255, .62);
+  }
+}
