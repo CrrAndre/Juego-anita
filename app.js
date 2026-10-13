@@ -99,6 +99,7 @@ const mistakeCounts = {};
 let specialIndex = 0;
 let specialScore = 0;
 let specialCards = [];
+let specialCorrectAnswers = 0;
 
 function getInitials(name) {
   return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
@@ -456,6 +457,7 @@ function startTriviaLevel() {
   specialCards = [...triviaCards].sort(() => Math.random() - 0.5).slice(0, 5);
   specialIndex = 0;
   specialScore = 0;
+  specialCorrectAnswers = 0;
   $("#result-modal").hidden = true;
   $(".hero-grid").hidden = true;
   $(".game-section").hidden = true;
@@ -474,7 +476,10 @@ function answerTrivia(value) {
   feedback.className = `feedback ${correct ? "correct" : "wrong"}`;
   const selected = [...buttons].find((button) => button.dataset.answer === String(value));
   if (selected) selected.classList.add(correct ? "selected-correct" : "selected-wrong");
-  if (correct) specialScore += card.points;
+  if (correct) {
+    specialScore += card.points;
+    specialCorrectAnswers += 1;
+  }
   setTimeout(() => {
     specialIndex += 1;
     if (specialIndex >= specialCards.length) {
@@ -484,7 +489,7 @@ function answerTrivia(value) {
       $("#result-title").textContent = "Trivia verificada";
       $("#result-message").textContent = `Obtuviste ${specialScore} puntos en las afirmaciones del documento.`;
       $("#final-score").textContent = `${(score + specialScore).toLocaleString("es-CO")} pts`;
-      $("#final-correct").textContent = `${specialCards.filter((item, index) => index < specialIndex).length}/${specialCards.length}`;
+      $("#final-correct").textContent = `${specialCorrectAnswers}/${specialCards.length}`;
       $("#result-modal").hidden = false;
     } else {
       renderTriviaCard();
