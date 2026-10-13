@@ -17,8 +17,11 @@ Después abre `http://localhost:4173`.
 - Interfaz responsive para escritorio, tablet y móvil.
 - 6 productos de ejemplo con categoría, subcategoría, unidad de medida, descripción, marca, referencia e icono visual.
 - Cinco categorías jugables y control por clic o tecla `Space` para saltar.
-- Partidas de 10 rondas con contador, racha y bonus según los segundos restantes.
+- Partidas de 20 rondas, agrupadas en bloques temáticos de cinco, con contador, racha y bonus según los segundos restantes.
+- Pausa de 10 segundos entre preguntas y pistas desplegables de conservación, tipo y tamaño sin revelar la respuesta de inmediato.
 - Sistema de resultados: victoria en primer lugar, clasificación entre los tres primeros o derrota.
+- Panel del anfitrión para iniciar la partida y consultar la clasificación por puntos o aciertos.
+- Nivel especial de cinco tarjetas Verdadero/Falso, con dificultad, explicación y fuente verificable del documento de productos colombianos.
 - Pantalla de entrada con usuario y código de sala antes de iniciar la partida.
 - Creación de salas con código automático y entrada a salas existentes.
 - Código de partida dinámico y jugador personalizado en la clasificación.
@@ -29,6 +32,8 @@ Después abre `http://localhost:4173`.
 - Estilo visual liquid glass retro-moderno con efectos de tilt, ripple y transiciones centralizadas en `animations.js`.
 - Configuración mínima de Netlify en `netlify.toml`.
 - Esquema PostgreSQL listo para Supabase en `supabase/schema.sql`.
+- Carga opcional de las 166 tarjetas V/F en `supabase/trivia_cards.sql`; la fuente original se conserva en `productos_colombianos_logistica_trivia.xlsx`.
+- Reemplazo seguro del catálogo en `supabase/catalog_products.sql`: desactiva los SKU antiguos, actualiza los 30 productos nuevos y solo elimina registros antiguos que no tengan respuestas ni rondas históricas asociadas.
 - Cliente Supabase opcional: entrada real a salas y clasificación sincronizada por Realtime.
 
 ## Modelo de datos

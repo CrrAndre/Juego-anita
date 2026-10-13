@@ -41,6 +41,9 @@ create table if not exists public.products (
   active boolean not null default true
 );
 
+-- El catálogo se actualiza mediante supabase/catalog_products.sql para no
+-- romper respuestas históricas que aún referencien un producto antiguo.
+
 create table if not exists public.round_products (
   id uuid primary key default gen_random_uuid(),
   room_id uuid not null references public.rooms(id) on delete cascade,
@@ -61,6 +64,21 @@ create table if not exists public.answers (
   answered_at timestamptz not null default now()
 );
 
+create table if not exists public.trivia_cards (
+  id text primary key,
+  topic text not null,
+  statement text not null,
+  answer boolean not null,
+  explanation text not null,
+  difficulty text not null check (difficulty in ('Fácil', 'Media', 'Difícil')),
+  related_sku text,
+  related_product text,
+  source text not null,
+  points integer not null check (points > 0),
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
 create index if not exists answers_room_score_idx on public.answers(room_id, points_awarded desc);
 create index if not exists players_room_score_idx on public.players(room_id, total_points desc);
 
@@ -69,17 +87,20 @@ alter table public.players enable row level security;
 alter table public.products enable row level security;
 alter table public.round_products enable row level security;
 alter table public.answers enable row level security;
+alter table public.trivia_cards enable row level security;
 
 -- Para el MVP: lectura pública de catálogo y salas; las escrituras deben pasar por Edge Functions.
 drop policy if exists "catalog is readable" on public.products;
 drop policy if exists "rooms are readable" on public.rooms;
 drop policy if exists "players are readable" on public.players;
 drop policy if exists "round products are readable" on public.round_products;
+drop policy if exists "active trivia is readable" on public.trivia_cards;
 
 create policy "catalog is readable" on public.products for select using (active = true);
 create policy "rooms are readable" on public.rooms for select using (true);
 create policy "players are readable" on public.players for select using (true);
 create policy "round products are readable" on public.round_products for select using (true);
+create policy "active trivia is readable" on public.trivia_cards for select using (active = true);
 
 create or replace function public.calculate_points(is_correct boolean, response_ms integer)
 returns integer language sql immutable as $$

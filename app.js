@@ -36,12 +36,6 @@ let productDetails = [
   { conservation: "Temperatura ambiente", productType: "Higiene oral", size: "75 ml" },
   { conservation: "Refrigerado", productType: "Bebida gasificada", size: "600 ml" }
 ];
-const roundProductIndexes = [
-  [0, 2, 6, 9, 0],
-  [1, 4, 7, 1, 4],
-  [2, 6, 2, 6, 2],
-  [9, 4, 1, 9, 4]
-];
 const catalog = window.SHELF_CATALOG || { products: [], trivia: [] };
 if (catalog.products.length) {
   products = catalog.products.map((product) => ({
@@ -56,6 +50,9 @@ if (catalog.products.length) {
   }));
 }
 const triviaCards = catalog.trivia || [];
+const roundProductIndexes = Array.from({ length: Math.ceil(20 / 5) }, (_, blockIndex) => (
+  Array.from({ length: 5 }, (_, offset) => (blockIndex * 5) + offset)
+));
 const players = [
   { initials: "LU", name: "Lucía M.", points: 1480, time: "08.42s" },
   { initials: "TM", name: "Tomás R.", points: 1320, time: "09.07s" },
@@ -323,6 +320,11 @@ function renderProduct() {
   locked = false;
   document.querySelectorAll(".category-button, #skip-button").forEach((button) => { button.disabled = false; });
 }
+function getCurrentProduct() {
+  const blockIndex = Math.floor(productIndex / 5);
+  const productInBlock = productIndex % 5;
+  return products[roundProductIndexes[blockIndex][productInBlock]];
+}
 function renderTriviaCard() {
   const card = specialCards[specialIndex];
   if (!card) return;
@@ -399,7 +401,7 @@ function answer(category) {
   if (locked || gameOver) return;
   locked = true;
   document.querySelectorAll(".category-button, #skip-button").forEach((button) => { button.disabled = true; });
-  const product = products[productIndex % products.length];
+  const product = getCurrentProduct();
   const correct = category === product.category;
   const timeBonus = Math.max(0, seconds * 5);
   const points = correct ? 100 + timeBonus : 0;

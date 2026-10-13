@@ -103,6 +103,10 @@
           <div class="scoreboard-panel">
             <div class="panel-label"><span>Clasificación en vivo</span><span class="live-tag">EN VIVO</span></div>
             <p class="leaderboard-help">Tu posición se actualiza después de cada respuesta.</p>
+            <div class="leaderboard-tabs" role="tablist" aria-label="Ordenar clasificación">
+              <button class="leaderboard-tab active" type="button" data-ranking="points" role="tab" aria-selected="true">Puntos</button>
+              <button class="leaderboard-tab" type="button" data-ranking="correct" role="tab" aria-selected="false">Aciertos</button>
+            </div>
             <div id="leaderboard" class="leaderboard" role="list" aria-live="polite" aria-label="Clasificación de la sala"></div>
             <div class="your-score"><span>Tu posición</span><strong>#<span id="your-position">3</span></strong><b id="your-score">1.240 pts</b></div>
           </div>
@@ -120,15 +124,21 @@
               <article class="product-card" id="product-card">
                 <div class="product-card-top"><span class="barcode">|||| ||| ||||</span><span class="product-id" id="product-id">SKU 00482</span></div>
                 <div class="product-illustration" id="product-illustration" aria-hidden="true"><span class="product-sun">✦</span><span class="product-emoji">🥛</span></div>
-                <div class="product-details"><span class="product-tag" id="product-tag">LÁCTEOS · REFRIGERADO</span><h3 id="product-name">Leche entera</h3><p id="product-description">Leche entera pasteurizada, 1 L. Ideal para desayunos y recetas.</p></div>
+                <div class="product-details"><span class="product-tag" id="product-tag">FICHA DE INVENTARIO</span><h3 id="product-name">Leche entera</h3><p id="product-description">Leche entera pasteurizada, 1 L. Ideal para desayunos y recetas.</p></div>
                 <div class="product-specs">
                   <div><span>Marca</span><strong id="product-brand">Alquería</strong></div>
                   <div><span>Medida</span><strong id="product-unit">1 litro</strong></div>
                   <div><span>Referencia</span><strong id="product-reference">ALQ-LE-001</strong></div>
-                  <div><span>Conservación</span><strong id="product-conservation">Refrigerado</strong></div>
-                  <div><span>Qué tipo es</span><strong id="product-type">Lácteo</strong></div>
-                  <div><span>Tamaño</span><strong id="product-size">1 litro</strong></div>
                 </div>
+                <details class="product-clues" id="product-clues">
+                  <summary>Ver pistas de la ficha</summary>
+                  <div class="clue-grid">
+                    <div><span>Conservación</span><strong id="product-conservation">Refrigerado</strong></div>
+                    <div><span>Qué tipo es</span><strong id="product-type">Lácteo</strong></div>
+                    <div><span>Tamaño</span><strong id="product-size">1 litro</strong></div>
+                    <div><span>Origen</span><strong id="product-origin">Documento de referencia</strong></div>
+                  </div>
+                </details>
               </article>
               <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
               <div class="round-note"><span>⌁</span> 10 segundos para responder y 10 segundos de pausa entre preguntas.</div>
@@ -140,6 +150,24 @@
               <button class="skip-button" id="skip-button" type="button"><span>↷</span> Saltar producto <kbd>SPACE</kbd></button>
             </aside>
           </div>
+        </section>
+
+        <section class="special-level" id="special-level" hidden aria-labelledby="special-level-title">
+          <div class="special-heading">
+            <p class="eyebrow"><span class="eyebrow-line"></span><span id="special-progress">1 / 5</span></p>
+            <span class="special-badge">NIVEL ESPECIAL</span>
+          </div>
+          <h2 id="special-level-title">¿Verdadero<br /><em>o falso?</em></h2>
+          <p class="special-difficulty" id="special-difficulty">NIVEL FÁCIL · CADENA DE FRÍO</p>
+          <article class="truth-card">
+            <p class="truth-statement" id="special-statement"></p>
+            <div class="truth-actions">
+              <button class="truth-button" type="button" data-answer="true">Verdadero <span>✓</span></button>
+              <button class="truth-button truth-button-false" type="button" data-answer="false">Falso <span>×</span></button>
+            </div>
+            <p class="truth-source" id="special-source"></p>
+            <div class="feedback" id="special-feedback" role="status" aria-live="polite"></div>
+          </article>
         </section>
 
         <section class="how-section">
@@ -165,12 +193,14 @@
           <div><span>Posición</span><strong id="final-position">#1</strong></div>
         </div>
         <button class="restart-button" id="restart-button" type="button">Jugar otra vez <span>↗</span></button>
+        <button class="special-level-button" id="special-level-button" type="button">Jugar nivel especial V/F <span>✦</span></button>
       </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
     <script src="supabase-client.js"></script>
     <script src="animations.js"></script>
+    <script src="catalog-data.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
