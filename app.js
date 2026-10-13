@@ -40,7 +40,7 @@ const catalog = window.SHELF_CATALOG || { products: [], trivia: [] };
 if (catalog.products.length) {
   products = catalog.products.map((product) => ({
     ...product,
-    tag: `${product.category.toUpperCase()} · ${product.subcategory.toUpperCase()}`
+    tag: "FICHA DE INVENTARIO"
   }));
   productDetails = catalog.products.map(({ conservation, productType, size, origin }) => ({
     conservation,
