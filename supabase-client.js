@@ -95,9 +95,12 @@
     if (error) throw new Error(error.message);
   }
 
-  async function leaveRoom(playerId) {
-    if (!client || !playerId) return;
-    const { error } = await client.rpc("leave_room", { p_player_id: playerId });
+  async function leaveRoom(roomId, playerId) {
+    if (!client || !roomId || !playerId) return;
+    const { error } = await client.rpc("leave_room", {
+      p_room_id: roomId,
+      p_player_id: playerId
+    });
     if (error) throw new Error(error.message);
   }
 

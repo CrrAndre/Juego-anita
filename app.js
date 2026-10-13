@@ -61,6 +61,7 @@ const players = [
   { initials: "AN", name: "Tú", points: 1240, time: "09.84s", me: true },
   { initials: "SO", name: "Sofía P.", points: 1160, time: "10.21s" }
 ];
+const initialPlayers = players.map((player) => ({ ...player }));
 let productIndex = 0;
 let score = 0;
 let streak = 0;
@@ -602,7 +603,7 @@ async function leaveRoom() {
   leaveButton.disabled = true;
   leaveButton.textContent = "Saliendo…";
   try {
-    await ShelfBackend.leaveRoom(remotePlayerId);
+    await ShelfBackend.leaveRoom(remoteRoomId, remotePlayerId);
   } catch (leaveError) {
     console.error("No se pudo salir de la sala remota:", leaveError);
   }
@@ -619,6 +620,14 @@ async function leaveRoom() {
   remoteRoundStartedAt = null;
   remoteAdvancePending = false;
   isRoomHost = false;
+  players.splice(0, players.length, ...initialPlayers.map((player) => ({ ...player })));
+  productIndex = 0;
+  score = 0;
+  streak = 0;
+  correctAnswers = 0;
+  Object.keys(mistakeCounts).forEach((category) => { delete mistakeCounts[category]; });
+  joinedRoomCode = "MANGO-42";
+  currentUser = "Tú";
   gameOver = false;
   locked = false;
   closeProfileMenu();

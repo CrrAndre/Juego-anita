@@ -313,19 +313,36 @@ $$;
 revoke all on function public.record_player_result(uuid, integer, boolean) from public;
 grant execute on function public.record_player_result(uuid, integer, boolean) to anon, authenticated;
 
-create or replace function public.leave_room(p_player_id uuid)
+drop function if exists public.leave_room(uuid);
+
+create or replace function public.leave_room(p_room_id uuid, p_player_id uuid)
 returns void
 language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  first_player_id uuid;
 begin
-  delete from public.players where id = p_player_id;
+  select id
+    into first_player_id
+    from public.players
+   where room_id = p_room_id
+   order by joined_at asc
+   limit 1;
+
+  if first_player_id = p_player_id then
+    delete from public.rooms where id = p_room_id;
+  else
+    delete from public.players
+     where id = p_player_id
+       and room_id = p_room_id;
+  end if;
 end;
 $$;
 
-revoke all on function public.leave_room(uuid) from public;
-grant execute on function public.leave_room(uuid) to anon, authenticated;
+revoke all on function public.leave_room(uuid, uuid) from public;
+grant execute on function public.leave_room(uuid, uuid) to anon, authenticated;
 
 -- Realtime: algunas cuentas no muestran el selector en el Dashboard.
 -- Este bloque agrega las tablas a la publicación sin duplicarlas.
