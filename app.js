@@ -274,7 +274,18 @@ function updatePlayersFromRemote(remotePlayers) {
 }
 
 function renderCategories() {
-  $("#category-list").innerHTML = categories.map((category) => `<button class="category-button" type="button" data-category="${category.name}"><span class="cat-icon">${category.icon}</span><span><strong>${category.name}</strong><small>${category.hint}</small></span></button>`).join("");
+  const shuffledCategories = [...categories];
+  for (let index = shuffledCategories.length - 1; index > 0; index -= 1) {
+    const swapIndex = (productIndex * 3 + index * 7) % (index + 1);
+    [shuffledCategories[index], shuffledCategories[swapIndex]] = [shuffledCategories[swapIndex], shuffledCategories[index]];
+  }
+  const list = $("#category-list");
+  const difficultyLabel = productIndex >= 10 ? "Modo caos +" : productIndex >= 5 ? "Modo caos" : "Posiciones cambiantes";
+  $(".category-heading small").textContent = difficultyLabel;
+  list.classList.remove("category-reflow");
+  void list.offsetWidth;
+  list.innerHTML = shuffledCategories.map((category, index) => `<button class="category-button" style="--category-order:${index}" type="button" data-category="${category.name}"><span class="cat-icon">${category.icon}</span><span><strong>${category.name}</strong><small>${category.hint}</small></span></button>`).join("");
+  list.classList.add("category-reflow");
   document.querySelectorAll(".category-button").forEach((button) => button.addEventListener("click", () => answer(button.dataset.category)));
 }
 function renderLeaderboard() {
@@ -314,10 +325,14 @@ function renderProduct() {
   $("#product-type").textContent = details.productType;
   $("#product-size").textContent = details.size;
   $("#product-origin").textContent = details.origin || "Documento de referencia";
+  const card = $("#product-card");
+  card.style.setProperty("--enter-x", `${productIndex % 2 ? 28 : -28}px`);
+  card.style.setProperty("--enter-rotate", `${productIndex % 2 ? 2 : -2}deg`);
   $("#feedback").textContent = "";
   $("#feedback").className = "feedback";
-  $("#product-card").classList.remove("pop");
-  void $("#product-card").offsetWidth;
+  card.classList.remove("pop");
+  void card.offsetWidth;
+  renderCategories();
   ShelfMotion.revealProduct();
   seconds = 10;
   updateTimer();
