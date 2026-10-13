@@ -67,6 +67,7 @@ let remoteRoomId = null;
 let remotePlayerId = null;
 let playersSubscription = null;
 let roomSubscription = null;
+let roomPollId = null;
 let isRoomHost = false;
 let requestedAction = "join";
 const mistakeCounts = {};
@@ -144,6 +145,16 @@ async function joinRoom(event) {
       });
       roomSubscription?.unsubscribe();
       roomSubscription = ShelfBackend.subscribeRoom(remoteRoomId, handleRoomUpdate);
+      clearInterval(roomPollId);
+      roomPollId = setInterval(async () => {
+        if (gameOver || !remoteRoomId) return;
+        try {
+          const currentRoom = await ShelfBackend.loadRoom(remoteRoomId);
+          if (!isRoomHost && currentRoom.status === "playing") showGame();
+        } catch (roomError) {
+          console.error("No se pudo consultar el estado de la sala:", roomError);
+        }
+      }, 2000);
       if (!isRoomHost && room.status === "playing") showGame();
     }
   } catch (joinError) {
@@ -193,6 +204,7 @@ function renderHostDashboard() {
     .map((player) => `<div class="host-player-row" role="listitem"><span class="leader-avatar">${player.initials}</span><span>${player.name}${player.me ? " <small>(anfitrión)</small>" : ""}</span><b>${player.points.toLocaleString("es-CO")} pts</b></div>`)
     .join("");
   const podium = [...players]
+    .filter((player) => !player.me)
     .sort((a, b) => (b.correctAnswers || 0) - (a.correctAnswers || 0) || b.points - a.points)
     .slice(0, 3);
   $("#podium-list").innerHTML = podium.map((player, index) => `<div class="podium-row"><strong>${["🥇", "🥈", "🥉"][index]}</strong><span>${player.name}</span><b>${player.correctAnswers || 0} aciertos</b></div>`).join("");
@@ -214,8 +226,10 @@ async function startHostGame() {
   try {
     if (remoteRoomId) {
       await ShelfBackend.startRoom(remoteRoomId);
+    } else {
+      showGame();
     }
-    showGame();
+    if (remoteRoomId) showGame();
   } catch (startError) {
     button.disabled = false;
     button.innerHTML = "Iniciar partida <span>↗</span>";
