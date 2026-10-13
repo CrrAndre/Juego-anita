@@ -104,7 +104,7 @@ create policy "active trivia is readable" on public.trivia_cards for select usin
 
 create or replace function public.calculate_points(is_correct boolean, response_ms integer)
 returns integer language sql immutable as $$
-  select case when is_correct then 100 + greatest(0, 60 - floor(response_ms / 1000.0)::integer * 5) else 0 end;
+  select case when is_correct then 100 + greatest(0, 10 - least(10, floor(response_ms / 1000.0)::integer)) * 20 else 0 end;
 $$;
 
 create or replace function public.join_room(
@@ -231,7 +231,7 @@ grant execute on function public.start_room(uuid) to anon, authenticated;
 
 create or replace function public.record_player_result(
   p_player_id uuid,
-  p_points integer,
+  p_response_ms integer,
   p_is_correct boolean
 )
 returns void
@@ -240,12 +240,12 @@ security definer
 set search_path = public
 as $$
 begin
-  if p_points < 0 then
-    raise exception 'Los puntos no pueden ser negativos.';
+  if p_response_ms < 0 then
+    raise exception 'El tiempo de respuesta no puede ser negativo.';
   end if;
 
   update public.players
-     set total_points = total_points + p_points,
+     set total_points = total_points + public.calculate_points(p_is_correct, p_response_ms),
          correct_answers = correct_answers + case when p_is_correct then 1 else 0 end
    where id = p_player_id;
 

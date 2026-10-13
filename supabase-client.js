@@ -78,11 +78,11 @@
     return { mode: "remote", ...(Array.isArray(data) ? data[0] : data) };
   }
 
-  async function recordPlayerResult(playerId, points, isCorrect) {
+  async function recordPlayerResult(playerId, responseMs, isCorrect) {
     if (!client || !playerId) return;
     const { error } = await client.rpc("record_player_result", {
       p_player_id: playerId,
-      p_points: points,
+      p_response_ms: responseMs,
       p_is_correct: isCorrect
     });
     if (error) throw new Error(error.message);

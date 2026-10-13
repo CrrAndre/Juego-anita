@@ -20,7 +20,8 @@ Después abre `http://localhost:4173`.
 - Partidas de 20 rondas, agrupadas en bloques temáticos de cinco, con contador, racha y bonus según los segundos restantes.
 - Pausa de 10 segundos entre preguntas y pistas desplegables de conservación, tipo y tamaño sin revelar la respuesta de inmediato.
 - Sistema de resultados: victoria en primer lugar, clasificación entre los tres primeros o derrota.
-- Panel del anfitrión para iniciar la partida y consultar la clasificación por puntos o aciertos.
+- Panel del anfitrión para iniciar la partida y consultar un podio visual por puntos o aciertos.
+- Selección de emoji personal al entrar a la sala; el emoji aparece en el perfil, el ranking y el podio.
 - Nivel especial de cinco tarjetas Verdadero/Falso, con dificultad, explicación y fuente verificable del documento de productos colombianos.
 - Pantalla de entrada con usuario y código de sala antes de iniciar la partida.
 - Creación de salas con código automático y entrada a salas existentes.
@@ -38,7 +39,7 @@ Después abre `http://localhost:4173`.
 
 ## Modelo de datos
 
-El esquema separa la información en `rooms`, `players`, `products`, `round_products` y `answers`. La función `calculate_points` centraliza el cálculo de puntos para que el cliente no sea la fuente de verdad cuando se conecte el backend.
+El esquema separa la información en `rooms`, `players`, `products`, `round_products` y `answers`. Cada acierto otorga 100 puntos base más 20 puntos por cada segundo restante (máximo 300 puntos); `calculate_points` mantiene esta misma regla para el backend.
 
 Para la versión multijugador real:
 

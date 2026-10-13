@@ -21,6 +21,19 @@
           <form class="join-form" id="join-form" novalidate>
             <label for="username">Tu usuario <span>2–18 caracteres</span></label>
             <input id="username" name="username" type="text" minlength="2" maxlength="18" autocomplete="nickname" placeholder="Ej. AnitaGamer" required />
+            <fieldset class="avatar-picker">
+              <legend>Elige tu emoji</legend>
+              <div class="avatar-options" role="radiogroup" aria-label="Emoji del jugador">
+                <label><input type="radio" name="avatar" value="🦊" checked /><span>🦊</span></label>
+                <label><input type="radio" name="avatar" value="🐼" /><span>🐼</span></label>
+                <label><input type="radio" name="avatar" value="🐸" /><span>🐸</span></label>
+                <label><input type="radio" name="avatar" value="🦄" /><span>🦄</span></label>
+                <label><input type="radio" name="avatar" value="🐙" /><span>🐙</span></label>
+                <label><input type="radio" name="avatar" value="🚀" /><span>🚀</span></label>
+                <label><input type="radio" name="avatar" value="🌟" /><span>🌟</span></label>
+                <label><input type="radio" name="avatar" value="🍌" /><span>🍌</span></label>
+              </div>
+            </fieldset>
             <label for="room-code">Código de la sala <span>Ej. MANGO-42</span></label>
             <div class="room-input-wrap"><span aria-hidden="true">#</span><input id="room-code" name="room-code" type="text" minlength="4" maxlength="12" pattern="[A-Za-z0-9\-]+" autocomplete="off" placeholder="MANGO-42" /></div>
             <p class="join-error" id="join-error" role="alert" aria-live="polite"></p>
