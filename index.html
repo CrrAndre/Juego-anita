@@ -22,7 +22,7 @@
             <label for="username">Tu usuario <span>2–18 caracteres</span></label>
             <input id="username" name="username" type="text" minlength="2" maxlength="18" autocomplete="nickname" placeholder="Ej. AnitaGamer" required />
             <label for="room-code">Código de la sala <span>Ej. MANGO-42</span></label>
-            <div class="room-input-wrap"><span aria-hidden="true">#</span><input id="room-code" name="room-code" type="text" minlength="4" maxlength="12" pattern="[A-Za-z0-9-]+" autocomplete="off" placeholder="MANGO-42" /></div>
+            <div class="room-input-wrap"><span aria-hidden="true">#</span><input id="room-code" name="room-code" type="text" minlength="4" maxlength="12" pattern="[A-Za-z0-9\-]+" autocomplete="off" placeholder="MANGO-42" /></div>
             <p class="join-error" id="join-error" role="alert" aria-live="polite"></p>
             <div class="join-actions">
               <button class="join-button" type="submit" data-action="create">Crear sala <span>＋</span></button>
