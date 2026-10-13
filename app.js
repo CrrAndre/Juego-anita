@@ -408,6 +408,8 @@ function renderProduct() {
   $("#product-origin").textContent = details.origin || "Documento de referencia";
   $("#inline-trivia").hidden = !triviaRound;
   $(".game-layout").hidden = triviaRound;
+  $("#feedback").hidden = triviaRound;
+  $(".round-note").hidden = triviaRound;
   if (triviaCard) {
     $("#inline-trivia-difficulty").textContent = `NIVEL ${triviaCard.difficulty.toUpperCase()} · ${triviaCard.topic.toUpperCase()}`;
     $("#inline-trivia-statement").textContent = triviaCard.statement;
@@ -491,6 +493,22 @@ function answerTrivia(value) {
 }
 function updateTimer() { $("#timer").textContent = `00:${String(seconds).padStart(2, "0")}`; }
 function showFeedbackAnimation(correct, category) {
+  if (isTriviaRound()) {
+    const triviaCard = $("#inline-trivia");
+    const triviaFeedback = $("#inline-trivia-feedback");
+    triviaCard.classList.remove("answer-correct", "answer-wrong");
+    triviaFeedback.classList.remove("answer-correct", "answer-wrong");
+    void triviaCard.offsetWidth;
+    triviaCard.classList.add(correct ? "answer-correct" : "answer-wrong");
+    triviaFeedback.classList.add(correct ? "answer-correct" : "answer-wrong");
+    ShelfMotion.answer(correct);
+    if (correct) ShelfMotion.celebrate();
+    clearTimeout(feedbackAnimationId);
+    feedbackAnimationId = setTimeout(() => {
+      triviaCard.classList.remove("answer-correct", "answer-wrong");
+    }, 850);
+    return;
+  }
   const card = $("#product-card");
   const feedback = $("#feedback");
   const selectedButton = [...document.querySelectorAll(".category-button")].find((button) => button.dataset.category === category);

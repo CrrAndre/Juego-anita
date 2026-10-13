@@ -28,6 +28,8 @@ button { border: 0; color: inherit; cursor: pointer; font: inherit; }
 body.joining .topbar, body.joining footer { display: none; }
 main[hidden] { display: none; }
 section[hidden] { display: none; }
+/* Keep the browser's hidden state authoritative over component display rules. */
+[hidden] { display: none !important; }
 .waiting-room { max-width: 760px; padding: 100px 0 130px; }
 .waiting-room h2 { margin: 0; font-size: clamp(46px, 8vw, 88px); line-height: .9; letter-spacing: -.06em; }
 .waiting-room h2 em { color: var(--violet); font-style: normal; }
