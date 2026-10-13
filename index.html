@@ -25,8 +25,8 @@
             <div class="room-input-wrap"><span aria-hidden="true">#</span><input id="room-code" name="room-code" type="text" minlength="4" maxlength="12" pattern="[A-Za-z0-9\-]+" autocomplete="off" placeholder="MANGO-42" /></div>
             <p class="join-error" id="join-error" role="alert" aria-live="polite"></p>
             <div class="join-actions">
-              <button class="join-button" type="submit" data-action="create">Crear sala <span>＋</span></button>
-              <button class="join-button join-button-secondary" type="submit" data-action="join">Entrar a la sala <span>↗</span></button>
+              <button class="join-button room-action-button" type="submit" data-action="create">Crear sala <span>＋</span></button>
+              <button class="join-button join-button-secondary room-action-button" type="submit" data-action="join">Entrar a la sala <span>↗</span></button>
             </div>
           </form>
           <p class="join-note"><span class="pulse-dot"></span> Las partidas se sincronizan por código.</p>
@@ -47,6 +47,12 @@
       </header>
 
       <main id="top" hidden>
+        <section class="waiting-room" id="waiting-room" hidden aria-labelledby="waiting-room-title">
+          <p class="eyebrow"><span class="eyebrow-line"></span>Sala en espera</p>
+          <h2 id="waiting-room-title">El anfitrión aún no<br /><em>inicia la partida.</em></h2>
+          <p>Ya estás dentro. Cuando el anfitrión pulse “Iniciar partida”, el juego comenzará automáticamente.</p>
+          <div class="waiting-code"><span>CÓDIGO</span><strong id="waiting-room-code">—</strong></div>
+        </section>
         <section class="host-dashboard" id="host-dashboard" hidden aria-labelledby="host-dashboard-title">
           <div class="dashboard-heading">
             <div>
@@ -66,6 +72,10 @@
               <div class="host-players" id="host-players" role="list"></div>
             </article>
             <article class="dashboard-card">
+              <div class="dashboard-card-heading"><span>Podio de aciertos</span><span class="live-tag">TOP 3</span></div>
+              <div class="podium-list" id="podium-list" role="list"></div>
+            </article>
+            <article class="dashboard-card">
               <div class="dashboard-card-heading"><span>Resumen de la sala</span><span class="live-tag">EN VIVO</span></div>
               <div class="dashboard-stats">
                 <div><span>Respuestas</span><strong id="dashboard-answers">0</strong></div>
@@ -83,10 +93,11 @@
         </section>
         <section class="hero-grid">
           <div class="intro-copy">
-            <p class="eyebrow"><span class="eyebrow-line"></span><span id="round-label">Ronda 01 / 10</span></p>
+            <p class="eyebrow"><span class="eyebrow-line"></span><span id="round-label">Ronda 01 / 20</span></p>
             <h1>Clasifica.<br /><em>Corre.</em> Gana.</h1>
             <p class="intro-text">La caja está abierta. Lee la ficha y clasifica cada producto antes de que se agote el tiempo. Cada acierto suma puntos y cada segundo cuenta.</p>
-            <div class="progress-row"><span>Progreso de la ronda</span><strong id="round-progress">01 / 10</strong></div>
+            <div class="round-group-card"><span>ENFOQUE DEL BLOQUE</span><strong id="round-group">Lácteos y refrigerados · Conservación en frío</strong></div>
+            <div class="progress-row"><span>Progreso de la ronda</span><strong id="round-progress">01 / 20</strong></div>
             <div class="progress-track"><span id="round-progress-fill"></span></div>
           </div>
           <div class="scoreboard-panel">
@@ -105,15 +116,22 @@
 
           <div class="game-layout">
             <div class="product-zone">
-              <div class="round-meta"><span>Producto <strong id="product-number">01</strong> de 10</span><span class="timer" id="timer">00:12</span></div>
+              <div class="round-meta"><span>Producto <strong id="product-number">01</strong> de 20</span><span class="timer" id="timer">00:10</span></div>
               <article class="product-card" id="product-card">
                 <div class="product-card-top"><span class="barcode">|||| ||| ||||</span><span class="product-id" id="product-id">SKU 00482</span></div>
                 <div class="product-illustration" id="product-illustration" aria-hidden="true"><span class="product-sun">✦</span><span class="product-emoji">🥛</span></div>
                 <div class="product-details"><span class="product-tag" id="product-tag">LÁCTEOS · REFRIGERADO</span><h3 id="product-name">Leche entera</h3><p id="product-description">Leche entera pasteurizada, 1 L. Ideal para desayunos y recetas.</p></div>
-                <div class="product-specs"><div><span>Marca</span><strong id="product-brand">Alquería</strong></div><div><span>Medida</span><strong id="product-unit">1 litro</strong></div><div><span>Referencia</span><strong id="product-reference">ALQ-LE-001</strong></div></div>
+                <div class="product-specs">
+                  <div><span>Marca</span><strong id="product-brand">Alquería</strong></div>
+                  <div><span>Medida</span><strong id="product-unit">1 litro</strong></div>
+                  <div><span>Referencia</span><strong id="product-reference">ALQ-LE-001</strong></div>
+                  <div><span>Conservación</span><strong id="product-conservation">Refrigerado</strong></div>
+                  <div><span>Qué tipo es</span><strong id="product-type">Lácteo</strong></div>
+                  <div><span>Tamaño</span><strong id="product-size">1 litro</strong></div>
+                </div>
               </article>
               <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
-              <div class="round-note"><span>⌁</span> Responde rápido: los puntos bajan cada segundo.</div>
+              <div class="round-note"><span>⌁</span> 10 segundos para responder y 10 segundos de pausa entre preguntas.</div>
             </div>
 
             <aside class="category-zone">
@@ -143,7 +161,7 @@
         <p id="result-message">Tu velocidad te puso en lo más alto.</p>
         <div class="result-stats">
           <div><span>Puntaje</span><strong id="final-score">0</strong></div>
-          <div><span>Aciertos</span><strong id="final-correct">0/10</strong></div>
+          <div><span>Aciertos</span><strong id="final-correct">0/20</strong></div>
           <div><span>Posición</span><strong id="final-position">#1</strong></div>
         </div>
         <button class="restart-button" id="restart-button" type="button">Jugar otra vez <span>↗</span></button>

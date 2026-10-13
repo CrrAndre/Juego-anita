@@ -18,6 +18,30 @@ const categories = [
   { name: "Cuidado personal", hint: "Baño y cuerpo", icon: "✧" },
   { name: "Bebidas", hint: "Frías y listas", icon: "◌" }
 ];
+const roundGroups = [
+  { name: "Lácteos y refrigerados", hint: "Rondas 01–05", focus: "Conservación en frío" },
+  { name: "Despensa y granos", hint: "Rondas 06–10", focus: "Productos secos" },
+  { name: "Frutas y verduras", hint: "Rondas 11–15", focus: "Productos frescos" },
+  { name: "Snacks y bebidas", hint: "Rondas 16–20", focus: "Listos para consumir" }
+];
+const productDetails = [
+  { conservation: "Refrigerado", productType: "Lácteo", size: "1 litro" },
+  { conservation: "Lugar fresco y seco", productType: "Bebida molida", size: "500 g" },
+  { conservation: "Temperatura ambiente", productType: "Fruta fresca", size: "1 kg" },
+  { conservation: "Lugar fresco y seco", productType: "Producto de limpieza", size: "1.8 litros" },
+  { conservation: "Lugar fresco y seco", productType: "Snack horneado", size: "12 unidades" },
+  { conservation: "Temperatura ambiente", productType: "Cuidado personal", size: "250 ml" },
+  { conservation: "Refrigerado", productType: "Verdura fresca", size: "500 g" },
+  { conservation: "Lugar fresco y seco", productType: "Grano seco", size: "1 kg" },
+  { conservation: "Temperatura ambiente", productType: "Higiene oral", size: "75 ml" },
+  { conservation: "Refrigerado", productType: "Bebida gasificada", size: "600 ml" }
+];
+const roundProductIndexes = [
+  [0, 2, 6, 9, 0],
+  [1, 4, 7, 1, 4],
+  [2, 6, 2, 6, 2],
+  [9, 4, 1, 9, 4]
+];
 const players = [
   { initials: "LU", name: "Lucía M.", points: 1480, time: "08.42s" },
   { initials: "TM", name: "Tomás R.", points: 1320, time: "09.07s" },
@@ -28,11 +52,13 @@ let productIndex = 0;
 let score = 0;
 let streak = 0;
 let correctAnswers = 0;
-let seconds = 12;
+let seconds = 10;
 let timerId;
+let cooldownTimerId;
+let cooldownSeconds = 0;
 let locked = false;
 let gameOver = false;
-const totalRounds = 10;
+const totalRounds = 20;
 const $ = (selector) => document.querySelector(selector);
 let feedbackAnimationId;
 let joinedRoomCode = "MANGO-42";
@@ -40,11 +66,37 @@ let currentUser = "Tú";
 let remoteRoomId = null;
 let remotePlayerId = null;
 let playersSubscription = null;
+let roomSubscription = null;
 let isRoomHost = false;
+let requestedAction = "join";
 const mistakeCounts = {};
 
 function getInitials(name) {
   return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+}
+
+function showWaitingRoom() {
+  $("#waiting-room").hidden = false;
+  $("#waiting-room-code").textContent = joinedRoomCode;
+  $(".hero-grid").hidden = true;
+  $(".game-section").hidden = true;
+  $(".how-section").hidden = true;
+}
+
+function showGame() {
+  $("#waiting-room").hidden = true;
+  $("#host-dashboard").hidden = true;
+  $(".hero-grid").hidden = false;
+  $(".game-section").hidden = false;
+  $(".how-section").hidden = false;
+  renderCategories();
+  renderProduct();
+  startTimer();
+}
+
+async function handleRoomUpdate(payload) {
+  if (payload.new?.status !== "playing" || gameOver) return;
+  showGame();
 }
 
 async function joinRoom(event) {
@@ -53,7 +105,7 @@ async function joinRoom(event) {
   const roomInput = $("#room-code");
   const error = $("#join-error");
   const username = usernameInput.value.trim();
-  const action = event.submitter?.dataset.action || "join";
+  const action = event.submitter?.dataset.action || requestedAction;
   const roomCode = roomInput.value.trim().toUpperCase();
 
   if (username.length < 2 || username.length > 18) {
@@ -67,8 +119,8 @@ async function joinRoom(event) {
     return;
   }
 
-  const submitButton = event.submitter;
-  submitButton.disabled = true;
+  const submitButtons = [...document.querySelectorAll(".room-action-button")];
+  submitButtons.forEach((button) => { button.disabled = true; });
   error.textContent = action === "create" && ShelfBackend.isConfigured ? "Creando la sala..." :
     action === "join" && ShelfBackend.isConfigured ? "Verificando la sala..." : "";
   let membership;
@@ -83,19 +135,23 @@ async function joinRoom(event) {
     remotePlayerId = membership.player_id || null;
     if (membership.mode === "remote") {
       const remotePlayers = await ShelfBackend.loadPlayers(remoteRoomId);
+      const room = await ShelfBackend.loadRoom(remoteRoomId);
       updatePlayersFromRemote(remotePlayers);
       playersSubscription?.unsubscribe();
       playersSubscription = ShelfBackend.subscribePlayers(remoteRoomId, async () => {
         updatePlayersFromRemote(await ShelfBackend.loadPlayers(remoteRoomId));
         if (isRoomHost) renderHostDashboard();
       });
+      roomSubscription?.unsubscribe();
+      roomSubscription = ShelfBackend.subscribeRoom(remoteRoomId, handleRoomUpdate);
+      if (!isRoomHost && room.status === "playing") showGame();
     }
   } catch (joinError) {
     error.textContent = joinError.message || "No fue posible entrar a la sala.";
-    submitButton.disabled = false;
+    submitButtons.forEach((button) => { button.disabled = false; });
     return;
   }
-  submitButton.disabled = false;
+  submitButtons.forEach((button) => { button.disabled = false; });
   if (membership.mode === "local") {
     players.forEach((player) => { player.me = false; });
     const localPlayer = players.find((player) => player.name === "Tú");
@@ -120,11 +176,13 @@ async function joinRoom(event) {
     $(".game-section").hidden = true;
     $(".how-section").hidden = true;
     renderHostDashboard();
+  } else {
+    showWaitingRoom();
   }
   renderCategories();
   renderLeaderboard();
   renderProduct();
-  if (!isRoomHost) startTimer();
+  if (!isRoomHost && !document.querySelector("#waiting-room:not([hidden])")) startTimer();
 }
 
 function renderHostDashboard() {
@@ -134,6 +192,10 @@ function renderHostDashboard() {
     .sort((a, b) => b.points - a.points)
     .map((player) => `<div class="host-player-row" role="listitem"><span class="leader-avatar">${player.initials}</span><span>${player.name}${player.me ? " <small>(anfitrión)</small>" : ""}</span><b>${player.points.toLocaleString("es-CO")} pts</b></div>`)
     .join("");
+  const podium = [...players]
+    .sort((a, b) => (b.correctAnswers || 0) - (a.correctAnswers || 0) || b.points - a.points)
+    .slice(0, 3);
+  $("#podium-list").innerHTML = podium.map((player, index) => `<div class="podium-row"><strong>${["🥇", "🥈", "🥉"][index]}</strong><span>${player.name}</span><b>${player.correctAnswers || 0} aciertos</b></div>`).join("");
   const mistakes = Object.entries(mistakeCounts).sort(([, a], [, b]) => b - a);
   const totalAnswers = Object.values(mistakeCounts).reduce((sum, count) => sum + count, 0) + correctAnswers;
   $("#dashboard-answers").textContent = totalAnswers;
@@ -144,11 +206,21 @@ function renderHostDashboard() {
     : "<p class=\"dashboard-empty\">Todavía no hay errores registrados.</p>";
 }
 
-function startHostGame() {
-  $("#host-dashboard").hidden = true;
-  $(".hero-grid").hidden = false;
-  $(".game-section").hidden = false;
-  $(".how-section").hidden = false;
+async function startHostGame() {
+  const button = $("#start-game-button");
+  if (button.disabled) return;
+  button.disabled = true;
+  button.innerHTML = "Iniciando…";
+  try {
+    if (remoteRoomId) {
+      await ShelfBackend.startRoom(remoteRoomId);
+    }
+    showGame();
+  } catch (startError) {
+    button.disabled = false;
+    button.innerHTML = "Iniciar partida <span>↗</span>";
+    $("#join-error").textContent = startError.message || "No se pudo iniciar la partida.";
+  }
 }
 
 function updatePlayersFromRemote(remotePlayers) {
@@ -158,6 +230,7 @@ function updatePlayersFromRemote(remotePlayers) {
     initials: player.avatar_initials,
     name: player.display_name,
     points: player.total_points,
+    correctAnswers: player.correct_answers || 0,
     time: player.average_response_ms ? `${(player.average_response_ms / 1000).toFixed(2)}s` : "—",
     me: player.id === remotePlayerId
   }));
@@ -179,10 +252,16 @@ function renderLeaderboard() {
   $("#your-position").textContent = position;
 }
 function renderProduct() {
-  const product = products[productIndex % products.length];
+  const blockIndex = Math.floor(productIndex / 5);
+  const productInBlock = productIndex % 5;
+  const productIndexForRound = roundProductIndexes[blockIndex][productInBlock];
+  const product = products[productIndexForRound];
   const round = productIndex + 1;
+  const group = roundGroups[blockIndex];
+  const details = productDetails[productIndexForRound];
   $("#product-number").textContent = String(round).padStart(2, "0");
   $("#round-label").textContent = `Ronda ${String(round).padStart(2, "0")} / ${totalRounds}`;
+  $("#round-group").textContent = `${group.name} · ${group.focus}`;
   $("#product-id").textContent = product.id;
   $("#product-illustration").querySelector(".product-emoji").textContent = product.emoji;
   $("#product-tag").textContent = product.tag;
@@ -191,14 +270,18 @@ function renderProduct() {
   $("#product-brand").textContent = product.brand;
   $("#product-unit").textContent = product.unit;
   $("#product-reference").textContent = product.reference;
+  $("#product-conservation").textContent = details.conservation;
+  $("#product-type").textContent = details.productType;
+  $("#product-size").textContent = details.size;
   $("#feedback").textContent = "";
   $("#feedback").className = "feedback";
   $("#product-card").classList.remove("pop");
   void $("#product-card").offsetWidth;
   ShelfMotion.revealProduct();
-  seconds = 12;
+  seconds = 10;
   updateTimer();
   locked = false;
+  document.querySelectorAll(".category-button, #skip-button").forEach((button) => { button.disabled = false; });
 }
 function updateTimer() { $("#timer").textContent = `00:${String(seconds).padStart(2, "0")}`; }
 function showFeedbackAnimation(correct, category) {
@@ -224,6 +307,7 @@ function showFeedbackAnimation(correct, category) {
 function answer(category) {
   if (locked || gameOver) return;
   locked = true;
+  document.querySelectorAll(".category-button, #skip-button").forEach((button) => { button.disabled = true; });
   const product = products[productIndex % products.length];
   const correct = category === product.category;
   const timeBonus = Math.max(0, seconds * 5);
@@ -235,7 +319,12 @@ function answer(category) {
   const currentPlayer = players.find((player) => player.me);
   if (currentPlayer) {
     currentPlayer.points = score;
-    currentPlayer.time = `${(12 - seconds + 1).toFixed(2)}s`;
+    currentPlayer.correctAnswers = correctAnswers;
+    currentPlayer.time = `${(10 - seconds + 1).toFixed(2)}s`;
+  }
+  if (remotePlayerId) {
+    ShelfBackend.recordPlayerResult(remotePlayerId, points, correct)
+      .catch((resultError) => { console.error("No se pudo actualizar el resultado remoto:", resultError); });
   }
   renderLeaderboard();
   if (isRoomHost) renderHostDashboard();
@@ -246,9 +335,22 @@ function answer(category) {
   if (productIndex + 1 >= totalRounds) {
     setTimeout(endGame, 900);
   } else {
-    setTimeout(renderProduct, 900);
-    timerId = setInterval(tick, 1000);
+    setTimeout(startCooldown, 900);
   }
+}
+function startCooldown() {
+  clearInterval(cooldownTimerId);
+  cooldownSeconds = 10;
+  $("#timer").textContent = `SIGUIENTE 00:${String(cooldownSeconds).padStart(2, "0")}`;
+  cooldownTimerId = setInterval(() => {
+    cooldownSeconds -= 1;
+    $("#timer").textContent = `SIGUIENTE 00:${String(cooldownSeconds).padStart(2, "0")}`;
+    if (cooldownSeconds <= 0) {
+      clearInterval(cooldownTimerId);
+      renderProduct();
+      startTimer();
+    }
+  }, 1000);
 }
 function tick() { if (locked) return; seconds -= 1; updateTimer(); if (seconds <= 0) answer("__timeout__"); }
 function skip() { if (!locked && !gameOver) { answer("__skipped__"); } }
@@ -270,6 +372,7 @@ function endGame() {
   $("#result-modal").hidden = false;
 }
 function restartGame() {
+  clearInterval(cooldownTimerId);
   productIndex = 0;
   score = 0;
   streak = 0;
@@ -279,6 +382,7 @@ function restartGame() {
   const currentPlayer = players.find((player) => player.me);
   if (currentPlayer) {
     currentPlayer.points = score;
+    currentPlayer.correctAnswers = 0;
     currentPlayer.time = "—";
   }
   $("#result-modal").hidden = true;
@@ -297,6 +401,9 @@ function applyTheme(isDark) {
   localStorage.setItem("shelf-sprint-theme", isDark ? "dark" : "light");
 }
 
+document.querySelectorAll(".room-action-button").forEach((button) => {
+  button.addEventListener("click", () => { requestedAction = button.dataset.action; });
+});
 $("#join-form").addEventListener("submit", joinRoom);
 $("#start-game-button").addEventListener("click", startHostGame);
 $("#skip-button").addEventListener("click", skip);

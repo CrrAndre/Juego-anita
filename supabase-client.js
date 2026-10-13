@@ -39,12 +39,23 @@
     if (!client) return [];
     const { data, error } = await client
       .from("players")
-      .select("id, display_name, avatar_initials, total_points, average_response_ms")
+      .select("id, display_name, avatar_initials, total_points, correct_answers, average_response_ms")
       .eq("room_id", roomId)
       .order("total_points", { ascending: false })
       .order("joined_at", { ascending: true });
     if (error) throw new Error(error.message);
     return data || [];
+  }
+
+  async function loadRoom(roomId) {
+    if (!client) return { status: "waiting" };
+    const { data, error } = await client
+      .from("rooms")
+      .select("id, status, current_round, total_rounds")
+      .eq("id", roomId)
+      .single();
+    if (error) throw new Error(error.message);
+    return data;
   }
 
   function subscribePlayers(roomId, onChange) {
@@ -60,11 +71,45 @@
       .subscribe();
   }
 
+  async function startRoom(roomId) {
+    if (!client) return { mode: "local" };
+    const { data, error } = await client.rpc("start_room", { p_room_id: roomId });
+    if (error) throw new Error(error.message);
+    return { mode: "remote", ...(Array.isArray(data) ? data[0] : data) };
+  }
+
+  async function recordPlayerResult(playerId, points, isCorrect) {
+    if (!client || !playerId) return;
+    const { error } = await client.rpc("record_player_result", {
+      p_player_id: playerId,
+      p_points: points,
+      p_is_correct: isCorrect
+    });
+    if (error) throw new Error(error.message);
+  }
+
+  function subscribeRoom(roomId, onChange) {
+    if (!client) return null;
+    return client
+      .channel(`room-state-${roomId}`)
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "rooms",
+        filter: `id=eq.${roomId}`
+      }, onChange)
+      .subscribe();
+  }
+
   window.ShelfBackend = {
     isConfigured: hasConfig,
     joinRoom,
     createRoom,
+    startRoom,
+    recordPlayerResult,
+    loadRoom,
     loadPlayers,
-    subscribePlayers
+    subscribePlayers,
+    subscribeRoom
   };
 })();

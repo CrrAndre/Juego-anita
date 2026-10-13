@@ -7,9 +7,12 @@ create table if not exists public.rooms (
   code text unique not null,
   status text not null default 'waiting' check (status in ('waiting', 'playing', 'finished')),
   current_round smallint not null default 1,
-  total_rounds smallint not null default 10,
+  total_rounds smallint not null default 20,
   created_at timestamptz not null default now()
 );
+
+alter table public.rooms alter column total_rounds set default 20;
+update public.rooms set total_rounds = 20 where status = 'waiting';
 
 create table if not exists public.players (
   id uuid primary key default gen_random_uuid(),
@@ -178,6 +181,61 @@ $$;
 
 revoke all on function public.create_room(text, text) from public;
 grant execute on function public.create_room(text, text) to anon, authenticated;
+
+create or replace function public.start_room(p_room_id uuid)
+returns public.rooms
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  started_room public.rooms%rowtype;
+begin
+  update public.rooms
+     set status = 'playing'
+   where id = p_room_id
+     and status = 'waiting'
+   returning * into started_room;
+
+  if started_room.id is null then
+    raise exception 'La sala no está disponible para iniciar.';
+  end if;
+
+  return started_room;
+end;
+$$;
+
+revoke all on function public.start_room(uuid) from public;
+grant execute on function public.start_room(uuid) to anon, authenticated;
+
+create or replace function public.record_player_result(
+  p_player_id uuid,
+  p_points integer,
+  p_is_correct boolean
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if p_points < 0 then
+    raise exception 'Los puntos no pueden ser negativos.';
+  end if;
+
+  update public.players
+     set total_points = total_points + p_points,
+         correct_answers = correct_answers + case when p_is_correct then 1 else 0 end
+   where id = p_player_id;
+
+  if not found then
+    raise exception 'El jugador no existe.';
+  end if;
+end;
+$$;
+
+revoke all on function public.record_player_result(uuid, integer, boolean) from public;
+grant execute on function public.record_player_result(uuid, integer, boolean) to anon, authenticated;
 
 -- Realtime: algunas cuentas no muestran el selector en el Dashboard.
 -- Este bloque agrega las tablas a la publicación sin duplicarlas.
