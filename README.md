@@ -32,6 +32,7 @@ Después abre `http://localhost:4173`.
 - En salas remotas, todos los jugadores comparten la misma tarjeta, ronda y contador global de 10 segundos.
 - Las rondas de verdadero/falso reemplazan por completo la clasificación en las rondas 04, 08, 12, 16 y 20.
 - Las categorías jugables coinciden con las categorías del catálogo, incluyendo hortalizas como la cebolla.
+- La categoría visible `Lácteos` acepta los productos almacenados como `Lácteos y refrigerados`, para mantener una etiqueta clara sin romper el catálogo remoto.
 - El catálogo activo contiene 30 productos y ocho categorías sin opciones antiguas o contradictorias.
 - Las 20 rondas usan una secuencia equilibrada y determinista que mezcla categorías y evita repetir la misma sección consecutivamente.
 - Al salir el creador, la sala remota se elimina automáticamente; los demás jugadores solo abandonan su membresía.

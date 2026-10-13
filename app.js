@@ -11,7 +11,7 @@ let products = [
   { id: "SKU 00876", name: "Agua con gas", tag: "BEBIDAS · REFRIGERADO", description: "Agua mineral con gas, ligera y refrescante.", brand: "Brisa", unit: "600 ml", reference: "BRI-AG-600", emoji: "🫧", category: "Bebidas", subcategory: "Frías" }
 ];
 const categories = [
-  { name: "Lácteos y refrigerados", hint: "Leches y yogures", icon: "🧊" },
+  { name: "Lácteos", hint: "Leches y yogures", icon: "🥛" },
   { name: "Despensa", hint: "Secos y bebidas", icon: "◒" },
   { name: "Frutas y verduras", hint: "Frescos", icon: "🍎" },
   { name: "Carnes y embutidos", hint: "Proteínas", icon: "🥩" },
@@ -20,6 +20,10 @@ const categories = [
   { name: "Hogar y aseo", hint: "Cuidado del hogar", icon: "🧹" },
   { name: "Bebidas", hint: "Frías y listas", icon: "◌" }
 ];
+function categoriesMatch(selectedCategory, productCategory) {
+  if (selectedCategory === productCategory) return true;
+  return selectedCategory === "Lácteos" && productCategory === "Lácteos y refrigerados";
+}
 const defaultAvatar = "🦊";
 const getSelectedAvatar = () => document.querySelector('input[name="avatar"]:checked')?.value || defaultAvatar;
 const roundGroups = [
@@ -572,7 +576,9 @@ function answer(category) {
   const triviaRound = isTriviaRound();
   const triviaCard = triviaRound ? getCurrentTriviaCard() : null;
   const product = triviaRound ? null : getCurrentProduct();
-  const correct = triviaRound ? category === String(triviaCard.answer) : category === product.category;
+  const correct = triviaRound
+    ? category === String(triviaCard.answer)
+    : categoriesMatch(category, product.category);
   const points = correct ? 100 + (seconds * 20) : 0;
   const feedback = $("#feedback");
   if (correct) {
