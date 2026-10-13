@@ -12,9 +12,14 @@ let products = [
 ];
 const categories = [
   { name: "Lácteos", hint: "Fríos y frescos", icon: "🥛" },
+  { name: "Lácteos y refrigerados", hint: "Leches y yogures", icon: "🧊" },
   { name: "Despensa", hint: "Secos y bebidas", icon: "◒" },
   { name: "Frutas y verduras", hint: "Frescos", icon: "🍎" },
+  { name: "Carnes y embutidos", hint: "Proteínas", icon: "🥩" },
+  { name: "Congelados", hint: "Listos para cocinar", icon: "❄️" },
+  { name: "Dulces y snacks", hint: "Antojos", icon: "🍬" },
   { name: "Limpieza", hint: "Hogar", icon: "✦" },
+  { name: "Hogar y aseo", hint: "Cuidado del hogar", icon: "🧹" },
   { name: "Cuidado personal", hint: "Baño y cuerpo", icon: "✧" },
   { name: "Bebidas", hint: "Frías y listas", icon: "◌" }
 ];
@@ -512,15 +517,28 @@ function answer(category) {
   if (locked || gameOver) return;
   locked = true;
   document.querySelectorAll(".category-button, #skip-button, .inline-truth-button").forEach((button) => { button.disabled = true; });
-  const product = getCurrentProduct();
   const triviaRound = isTriviaRound();
   const triviaCard = triviaRound ? getCurrentTriviaCard() : null;
-  const correct = triviaRound
-    ? category === String(triviaCard.answer)
-    : category === product.category;
+  const product = triviaRound ? null : getCurrentProduct();
+  const correct = triviaRound ? category === String(triviaCard.answer) : category === product.category;
   const points = correct ? 100 + (seconds * 20) : 0;
   const feedback = $("#feedback");
-  if (correct) { score += points; correctAnswers += 1; streak += 1; feedback.textContent = `✓ ¡Correcto! +${points} puntos · ${seconds}s restantes`; feedback.className = "feedback correct"; } else { streak = 0; mistakeCounts[product.category] = (mistakeCounts[product.category] || 0) + 1; feedback.textContent = triviaRound ? `× Incorrecto. La respuesta era ${triviaCard.answer ? "Verdadero" : "Falso"}.` : category === "__skipped__" ? `↷ Producto saltado. Era ${product.category}.` : `× Casi. Era ${product.category}. Respira y sigue.`; feedback.className = "feedback wrong"; }
+  if (correct) {
+    score += points;
+    correctAnswers += 1;
+    streak += 1;
+    feedback.textContent = `✓ ¡Correcto! +${points} puntos · ${seconds}s restantes`;
+    feedback.className = "feedback correct";
+  } else {
+    streak = 0;
+    if (!triviaRound) mistakeCounts[product.category] = (mistakeCounts[product.category] || 0) + 1;
+    feedback.textContent = triviaRound
+      ? `× Incorrecto. La respuesta era ${triviaCard.answer ? "Verdadero" : "Falso"}.`
+      : category === "__skipped__"
+        ? `↷ Producto saltado. Era ${product.category}.`
+        : `× Casi. Era ${product.category}. Respira y sigue.`;
+    feedback.className = "feedback wrong";
+  }
   if (triviaRound) {
     const triviaFeedback = $("#inline-trivia-feedback");
     triviaFeedback.textContent = correct ? `✓ Correcto. ${triviaCard.explanation}` : `× Incorrecto. ${triviaCard.explanation}`;
