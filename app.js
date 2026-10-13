@@ -1,4 +1,4 @@
-const products = [
+let products = [
   { id: "SKU 00482", name: "Leche entera", tag: "LÁCTEOS · REFRIGERADO", description: "Leche entera pasteurizada, 1 L. Ideal para desayunos y recetas.", brand: "Alquería", unit: "1 litro", reference: "ALQ-LE-001", emoji: "🥛", category: "Lácteos", subcategory: "Refrigerados" },
   { id: "SKU 00831", name: "Café molido clásico", tag: "DESPENSA · BEBIDAS", description: "Café 100% colombiano, tueste medio, con aroma intenso.", brand: "Águila Roja", unit: "500 g", reference: "AGR-CM-500", emoji: "☕", category: "Despensa", subcategory: "Bebidas" },
   { id: "SKU 00219", name: "Banano premium", tag: "FRUTAS Y VERDURAS · FRESCOS", description: "Banano fresco seleccionado, fuente natural de energía.", brand: "Frescura", unit: "1 kg", reference: "FRU-BA-001", emoji: "🍌", category: "Frutas y verduras", subcategory: "Frutas" },
@@ -24,7 +24,7 @@ const roundGroups = [
   { name: "Frutas y verduras", hint: "Rondas 11–15", focus: "Productos frescos" },
   { name: "Snacks y bebidas", hint: "Rondas 16–20", focus: "Listos para consumir" }
 ];
-const productDetails = [
+let productDetails = [
   { conservation: "Refrigerado", productType: "Lácteo", size: "1 litro" },
   { conservation: "Lugar fresco y seco", productType: "Bebida molida", size: "500 g" },
   { conservation: "Temperatura ambiente", productType: "Fruta fresca", size: "1 kg" },
@@ -42,6 +42,20 @@ const roundProductIndexes = [
   [2, 6, 2, 6, 2],
   [9, 4, 1, 9, 4]
 ];
+const catalog = window.SHELF_CATALOG || { products: [], trivia: [] };
+if (catalog.products.length) {
+  products = catalog.products.map((product) => ({
+    ...product,
+    tag: `${product.category.toUpperCase()} · ${product.subcategory.toUpperCase()}`
+  }));
+  productDetails = catalog.products.map(({ conservation, productType, size, origin }) => ({
+    conservation,
+    productType,
+    size,
+    origin
+  }));
+}
+const triviaCards = catalog.trivia || [];
 const players = [
   { initials: "LU", name: "Lucía M.", points: 1480, time: "08.42s" },
   { initials: "TM", name: "Tomás R.", points: 1320, time: "09.07s" },
@@ -70,7 +84,11 @@ let roomSubscription = null;
 let roomPollId = null;
 let isRoomHost = false;
 let requestedAction = "join";
+let leaderboardMode = "points";
 const mistakeCounts = {};
+let specialIndex = 0;
+let specialScore = 0;
+let specialCards = [];
 
 function getInitials(name) {
   return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
@@ -259,9 +277,15 @@ function renderCategories() {
   document.querySelectorAll(".category-button").forEach((button) => button.addEventListener("click", () => answer(button.dataset.category)));
 }
 function renderLeaderboard() {
-  const ranking = [...players].sort((a, b) => b.points - a.points);
+  const ranking = [...players].sort((a, b) => leaderboardMode === "correct"
+    ? (b.correctAnswers || 0) - (a.correctAnswers || 0) || b.points - a.points
+    : b.points - a.points || (b.correctAnswers || 0) - (a.correctAnswers || 0));
   const position = ranking.findIndex((player) => player.me) + 1;
-  $("#leaderboard").innerHTML = ranking.map((player, index) => `<div class="leader-row ${player.me ? "me" : ""}" role="listitem" aria-label="${player.name}, posición ${index + 1}, ${player.points.toLocaleString("es-CO")} puntos"><small>${String(index + 1).padStart(2, "0")}</small><span class="leader-avatar" aria-hidden="true">${player.initials}</span><span>${player.name}${player.me ? " (tú)" : ""}</span><b>${player.points.toLocaleString("es-CO")}</b><small>${player.time}</small></div>`).join("");
+  $("#leaderboard").innerHTML = ranking.map((player, index) => {
+    const primary = leaderboardMode === "correct" ? `${player.correctAnswers || 0} aciertos` : `${player.points.toLocaleString("es-CO")} pts`;
+    const secondary = leaderboardMode === "correct" ? `${player.points.toLocaleString("es-CO")} pts` : `${player.correctAnswers || 0} aciertos`;
+    return `<div class="leader-row ${player.me ? "me" : ""}" role="listitem" aria-label="${player.name}, posición ${index + 1}, ${primary}"><small class="leader-rank">${String(index + 1).padStart(2, "0")}</small><span class="leader-avatar" aria-hidden="true">${player.initials}</span><span class="leader-name">${player.name}${player.me ? " (tú)" : ""}</span><b>${primary}</b><small>${secondary}</small></div>`;
+  }).join("");
   $("#your-score").textContent = `${score.toLocaleString("es-CO")} pts`;
   $("#your-position").textContent = position;
 }
@@ -284,9 +308,11 @@ function renderProduct() {
   $("#product-brand").textContent = product.brand;
   $("#product-unit").textContent = product.unit;
   $("#product-reference").textContent = product.reference;
+  $("#product-clues").open = false;
   $("#product-conservation").textContent = details.conservation;
   $("#product-type").textContent = details.productType;
   $("#product-size").textContent = details.size;
+  $("#product-origin").textContent = details.origin || "Documento de referencia";
   $("#feedback").textContent = "";
   $("#feedback").className = "feedback";
   $("#product-card").classList.remove("pop");
@@ -296,6 +322,57 @@ function renderProduct() {
   updateTimer();
   locked = false;
   document.querySelectorAll(".category-button, #skip-button").forEach((button) => { button.disabled = false; });
+}
+function renderTriviaCard() {
+  const card = specialCards[specialIndex];
+  if (!card) return;
+  $("#special-progress").textContent = `${specialIndex + 1} / ${specialCards.length}`;
+  $("#special-difficulty").textContent = `NIVEL ${card.difficulty.toUpperCase()} · ${card.topic.toUpperCase()}`;
+  $("#special-statement").textContent = card.statement;
+  $("#special-source").textContent = `Fuente: ${card.source} · ${card.product}`;
+  $("#special-feedback").textContent = "";
+  $("#special-feedback").className = "feedback";
+  document.querySelectorAll(".truth-button").forEach((button) => { button.disabled = false; button.classList.remove("selected-correct", "selected-wrong"); });
+}
+function startTriviaLevel() {
+  if (!triviaCards.length) return;
+  specialCards = [...triviaCards].sort(() => Math.random() - 0.5).slice(0, 5);
+  specialIndex = 0;
+  specialScore = 0;
+  $("#result-modal").hidden = true;
+  $(".hero-grid").hidden = true;
+  $(".game-section").hidden = true;
+  $(".how-section").hidden = true;
+  $("#special-level").hidden = false;
+  renderTriviaCard();
+}
+function answerTrivia(value) {
+  const card = specialCards[specialIndex];
+  if (!card) return;
+  const buttons = document.querySelectorAll(".truth-button");
+  buttons.forEach((button) => { button.disabled = true; });
+  const correct = value === card.answer;
+  const feedback = $("#special-feedback");
+  feedback.textContent = correct ? `✓ Correcto. +${card.points} puntos. ${card.explanation}` : `× Incorrecto. ${card.explanation}`;
+  feedback.className = `feedback ${correct ? "correct" : "wrong"}`;
+  const selected = [...buttons].find((button) => button.dataset.answer === String(value));
+  if (selected) selected.classList.add(correct ? "selected-correct" : "selected-wrong");
+  if (correct) specialScore += card.points;
+  setTimeout(() => {
+    specialIndex += 1;
+    if (specialIndex >= specialCards.length) {
+      $("#special-level").hidden = true;
+      $("#result-kicker").textContent = "NIVEL ESPECIAL COMPLETADO";
+      $("#result-medal").textContent = "🧠";
+      $("#result-title").textContent = "Trivia verificada";
+      $("#result-message").textContent = `Obtuviste ${specialScore} puntos en las afirmaciones del documento.`;
+      $("#final-score").textContent = `${(score + specialScore).toLocaleString("es-CO")} pts`;
+      $("#final-correct").textContent = `${specialCards.filter((item, index) => index < specialIndex).length}/${specialCards.length}`;
+      $("#result-modal").hidden = false;
+    } else {
+      renderTriviaCard();
+    }
+  }, 1800);
 }
 function updateTimer() { $("#timer").textContent = `00:${String(seconds).padStart(2, "0")}`; }
 function showFeedbackAnimation(correct, category) {
@@ -402,7 +479,7 @@ function restartGame() {
   $("#result-modal").hidden = true;
   $("#streak-value").textContent = streak;
   $("#round-progress").textContent = `01 / ${totalRounds}`;
-  $("#round-progress-fill").style.width = "10%";
+  $("#round-progress-fill").style.width = `${100 / totalRounds}%`;
   renderLeaderboard();
   renderProduct();
   startTimer();
@@ -420,6 +497,21 @@ document.querySelectorAll(".room-action-button").forEach((button) => {
 });
 $("#join-form").addEventListener("submit", joinRoom);
 $("#start-game-button").addEventListener("click", startHostGame);
+$("#special-level-button").addEventListener("click", startTriviaLevel);
+document.querySelectorAll(".truth-button").forEach((button) => {
+  button.addEventListener("click", () => answerTrivia(button.dataset.answer === "true"));
+});
+document.querySelectorAll(".leaderboard-tab").forEach((button) => {
+  button.addEventListener("click", () => {
+    leaderboardMode = button.dataset.ranking;
+    document.querySelectorAll(".leaderboard-tab").forEach((tab) => {
+      const active = tab === button;
+      tab.classList.toggle("active", active);
+      tab.setAttribute("aria-selected", String(active));
+    });
+    renderLeaderboard();
+  });
+});
 $("#skip-button").addEventListener("click", skip);
 $("#restart-button").addEventListener("click", restartGame);
 $("#theme-toggle").addEventListener("click", () => applyTheme(!document.body.classList.contains("dark-mode")));
