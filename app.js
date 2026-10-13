@@ -101,6 +101,7 @@ function showWaitingRoom() {
   $(".hero-grid").hidden = true;
   $(".game-section").hidden = true;
   $(".how-section").hidden = true;
+  $("#host-live-podium").hidden = true;
 }
 
 function showGame() {
@@ -109,8 +110,10 @@ function showGame() {
   $(".hero-grid").hidden = false;
   $(".game-section").hidden = false;
   $(".how-section").hidden = false;
+  $("#host-live-podium").hidden = !isRoomHost;
   renderCategories();
   renderProduct();
+  if (isRoomHost) renderLivePodium();
   startTimer();
 }
 
@@ -266,10 +269,9 @@ function renderHostDashboard() {
     .sort((a, b) => b.points - a.points)
     .map((player) => `<div class="host-player-row" role="listitem"><span class="leader-avatar">${player.initials}</span><span>${player.name}${player.me ? " <small>(anfitrión)</small>" : ""}</span><b>${player.points.toLocaleString("es-CO")} pts</b></div>`)
     .join("");
-  const podium = [...players]
-    .sort((a, b) => b.points - a.points || (b.correctAnswers || 0) - (a.correctAnswers || 0))
-    .slice(0, 3);
+  const podium = getPodiumPlayers();
   $("#podium-list").innerHTML = podium.map((player, index) => `<div class="podium-row podium-place-${index + 1}"><div class="podium-medal">${["🥇", "🥈", "🥉"][index]}</div><span class="podium-avatar">${player.initials}</span><span class="podium-player"><strong>${player.name}</strong><small>${player.correctAnswers || 0} aciertos</small></span><b>${player.points.toLocaleString("es-CO")} pts</b></div>`).join("");
+  renderLivePodium();
   const mistakes = Object.entries(mistakeCounts).sort(([, a], [, b]) => b - a);
   const totalAnswers = Object.values(mistakeCounts).reduce((sum, count) => sum + count, 0) + correctAnswers;
   $("#dashboard-answers").textContent = totalAnswers;
@@ -278,6 +280,21 @@ function renderHostDashboard() {
   $("#mistake-list").innerHTML = mistakes.length
     ? mistakes.map(([category, count]) => `<div class="mistake-row"><span>${category}</span><b>${count} error${count === 1 ? "" : "es"}</b></div>`).join("")
     : "<p class=\"dashboard-empty\">Todavía no hay errores registrados.</p>";
+}
+
+function getPodiumPlayers() {
+  return [...players]
+    .sort((a, b) => b.points - a.points || (b.correctAnswers || 0) - (a.correctAnswers || 0))
+    .slice(0, 3);
+}
+
+function renderLivePodium() {
+  const list = $("#live-podium-list");
+  if (!list || !isRoomHost) return;
+  const podium = getPodiumPlayers();
+  list.innerHTML = podium.length
+    ? podium.map((player, index) => `<article class="live-podium-place place-${index + 1}" role="listitem"><div class="live-podium-rank">${["🥇", "🥈", "🥉"][index]}</div><div class="live-podium-avatar">${player.initials}</div><strong>${player.name}</strong><span>${player.points.toLocaleString("es-CO")} pts</span><small>${player.correctAnswers || 0} aciertos</small></article>`).join("")
+    : "<p class=\"dashboard-empty\">Esperando jugadores...</p>";
 }
 
 async function startHostGame() {
@@ -609,6 +626,7 @@ async function leaveRoom() {
   $("#profile-room").textContent = "Sin sala";
   $("#join-screen").hidden = false;
   $("#top").hidden = true;
+  $("#host-live-podium").hidden = true;
   document.body.classList.add("joining");
   leaveButton.disabled = false;
   leaveButton.innerHTML = 'Salir de la sala <span>↗</span>';
