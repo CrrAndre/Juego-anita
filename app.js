@@ -299,7 +299,7 @@ function renderProduct() {
   $("#round-group").textContent = `${group.name} · ${group.focus}`;
   $("#product-id").textContent = product.id;
   $("#product-illustration").querySelector(".product-emoji").textContent = product.emoji;
-  $("#product-tag").textContent = product.tag;
+  $("#product-tag").textContent = "FICHA DE INVENTARIO";
   $("#product-name").textContent = product.name;
   $("#product-description").textContent = product.description;
   $("#product-brand").textContent = product.brand;

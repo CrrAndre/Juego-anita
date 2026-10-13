@@ -148,6 +148,20 @@ body.dark-mode .your-score b, body.dark-mode .round-meta strong, body.dark-mode 
   .special-level { padding: 44px 0 70px; }
 }
 
+/* Keep card metadata and category labels readable at every viewport width. */
+.category-button .cat-icon { flex: 0 0 29px; }
+.category-button > span:last-child { min-width: 0; display: grid; gap: 2px; line-height: 1.15; }
+.category-button strong { display: block; }
+.product-specs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.product-specs div { min-width: 0; display: grid; gap: 4px; }
+.product-specs span, .product-specs strong { min-width: 0; }
+.product-specs strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 600px) {
+  .game-layout { gap: 22px; }
+  .category-button > span:last-child { font-size: 12px; }
+  .category-button small { font-size: 8px; }
+}
+
 .special-level { max-width: 780px; margin: 0 auto; padding: 78px 0 110px; }
 .special-heading { display: flex; align-items: center; justify-content: space-between; }
 .special-badge { padding: 8px 11px; border: 1px solid rgba(113,100,255,.25); border-radius: 99px; color: var(--violet); font: 10px var(--mono); letter-spacing: .08em; }
