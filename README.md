@@ -32,6 +32,7 @@ Después abre `http://localhost:4173`.
 - En salas remotas, todos los jugadores comparten la misma tarjeta, ronda y contador global de 10 segundos.
 - Las rondas de verdadero/falso reemplazan por completo la clasificación en las rondas 04, 08, 12, 16 y 20.
 - Las categorías jugables coinciden con las categorías del catálogo, incluyendo hortalizas como la cebolla.
+- El catálogo activo contiene 30 productos y ocho categorías sin opciones antiguas o contradictorias.
 - Al salir el creador, la sala remota se elimina automáticamente; los demás jugadores solo abandonan su membresía.
 - Animaciones ligeras para producto, progreso y feedback.
 - Estilo visual liquid glass retro-moderno con efectos de tilt, ripple y transiciones centralizadas en `animations.js`.

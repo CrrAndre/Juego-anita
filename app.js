@@ -11,16 +11,13 @@ let products = [
   { id: "SKU 00876", name: "Agua con gas", tag: "BEBIDAS · REFRIGERADO", description: "Agua mineral con gas, ligera y refrescante.", brand: "Brisa", unit: "600 ml", reference: "BRI-AG-600", emoji: "🫧", category: "Bebidas", subcategory: "Frías" }
 ];
 const categories = [
-  { name: "Lácteos", hint: "Fríos y frescos", icon: "🥛" },
   { name: "Lácteos y refrigerados", hint: "Leches y yogures", icon: "🧊" },
   { name: "Despensa", hint: "Secos y bebidas", icon: "◒" },
   { name: "Frutas y verduras", hint: "Frescos", icon: "🍎" },
   { name: "Carnes y embutidos", hint: "Proteínas", icon: "🥩" },
   { name: "Congelados", hint: "Listos para cocinar", icon: "❄️" },
   { name: "Dulces y snacks", hint: "Antojos", icon: "🍬" },
-  { name: "Limpieza", hint: "Hogar", icon: "✦" },
   { name: "Hogar y aseo", hint: "Cuidado del hogar", icon: "🧹" },
-  { name: "Cuidado personal", hint: "Baño y cuerpo", icon: "✧" },
   { name: "Bebidas", hint: "Frías y listas", icon: "◌" }
 ];
 const defaultAvatar = "🦊";
