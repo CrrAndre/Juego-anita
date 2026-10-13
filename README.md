@@ -20,6 +20,7 @@ Después abre `http://localhost:4173`.
 - Partidas de 10 rondas con contador, racha y bonus según los segundos restantes.
 - Sistema de resultados: victoria en primer lugar, clasificación entre los tres primeros o derrota.
 - Pantalla de entrada con usuario y código de sala antes de iniciar la partida.
+- Creación de salas con código automático y entrada a salas existentes.
 - Código de partida dinámico y jugador personalizado en la clasificación.
 - Pantalla final con puntaje, aciertos, posición y botón para jugar otra vez.
 - Modo oscuro persistente mediante el botón de tema.

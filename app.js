@@ -51,6 +51,7 @@ async function joinRoom(event) {
   const roomInput = $("#room-code");
   const error = $("#join-error");
   const username = usernameInput.value.trim();
+  const action = event.submitter?.dataset.action || "join";
   const roomCode = roomInput.value.trim().toUpperCase();
 
   if (username.length < 2 || username.length > 18) {
@@ -58,7 +59,7 @@ async function joinRoom(event) {
     usernameInput.focus();
     return;
   }
-  if (!/^[A-Z0-9-]{4,12}$/.test(roomCode)) {
+  if (action === "join" && !/^[A-Z0-9-]{4,12}$/.test(roomCode)) {
     error.textContent = "Usa un código válido, por ejemplo MANGO-42.";
     roomInput.focus();
     return;
@@ -66,11 +67,14 @@ async function joinRoom(event) {
 
   const submitButton = event.submitter;
   submitButton.disabled = true;
-  error.textContent = ShelfBackend.isConfigured ? "Verificando la sala..." : "";
+  error.textContent = action === "create" && ShelfBackend.isConfigured ? "Creando la sala..." :
+    action === "join" && ShelfBackend.isConfigured ? "Verificando la sala..." : "";
   try {
-    const membership = await ShelfBackend.joinRoom(roomCode, username, getInitials(username));
+    const membership = action === "create"
+      ? await ShelfBackend.createRoom(username, getInitials(username))
+      : await ShelfBackend.joinRoom(roomCode, username, getInitials(username));
     currentUser = username;
-    joinedRoomCode = roomCode;
+    joinedRoomCode = membership.room_code || roomCode;
     remoteRoomId = membership.room_id || null;
     remotePlayerId = membership.player_id || null;
     if (membership.mode === "remote") {

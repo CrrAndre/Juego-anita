@@ -17,14 +17,17 @@
           <div class="join-brand"><span class="brand-mark" aria-hidden="true">SS</span><span>SHELF / SPRINT</span></div>
           <p class="eyebrow"><span class="eyebrow-line"></span>Partida multijugador</p>
           <h1 id="join-title">Entra a la<br /><em>góndola.</em></h1>
-          <p class="join-intro">Elige cómo aparecerás en la clasificación y usa el código que te compartió el anfitrión.</p>
+          <p class="join-intro">Crea una sala para invitar a tu equipo o usa el código que te compartió el anfitrión.</p>
           <form class="join-form" id="join-form" novalidate>
             <label for="username">Tu usuario <span>2–18 caracteres</span></label>
             <input id="username" name="username" type="text" minlength="2" maxlength="18" autocomplete="nickname" placeholder="Ej. AnitaGamer" required />
             <label for="room-code">Código de la sala <span>Ej. MANGO-42</span></label>
-            <div class="room-input-wrap"><span aria-hidden="true">#</span><input id="room-code" name="room-code" type="text" minlength="4" maxlength="12" pattern="[A-Za-z0-9-]+" autocomplete="off" placeholder="MANGO-42" required /></div>
+            <div class="room-input-wrap"><span aria-hidden="true">#</span><input id="room-code" name="room-code" type="text" minlength="4" maxlength="12" pattern="[A-Za-z0-9-]+" autocomplete="off" placeholder="MANGO-42" /></div>
             <p class="join-error" id="join-error" role="alert" aria-live="polite"></p>
-            <button class="join-button" type="submit">Entrar a la sala <span>↗</span></button>
+            <div class="join-actions">
+              <button class="join-button" type="submit" data-action="create">Crear sala <span>＋</span></button>
+              <button class="join-button join-button-secondary" type="submit" data-action="join">Entrar a la sala <span>↗</span></button>
+            </div>
           </form>
           <p class="join-note"><span class="pulse-dot"></span> Las partidas se sincronizan por código.</p>
         </div>

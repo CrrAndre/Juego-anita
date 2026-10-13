@@ -18,6 +18,23 @@
     return { mode: "remote", ...membership };
   }
 
+  async function createRoom(displayName, avatarInitials) {
+    if (!client) {
+      const code = `LOCAL-${Math.floor(10 + Math.random() * 90)}`;
+      return { mode: "local", room_code: code };
+    }
+    const { data, error } = await client.rpc("create_room", {
+      p_display_name: displayName,
+      p_avatar_initials: avatarInitials
+    });
+    if (error) throw new Error(error.message);
+    const membership = Array.isArray(data) ? data[0] : data;
+    if (!membership?.room_id || !membership?.player_id || !membership?.room_code) {
+      throw new Error("La sala no devolvió un código válido.");
+    }
+    return { mode: "remote", ...membership };
+  }
+
   async function loadPlayers(roomId) {
     if (!client) return [];
     const { data, error } = await client
@@ -46,6 +63,7 @@
   window.ShelfBackend = {
     isConfigured: hasConfig,
     joinRoom,
+    createRoom,
     loadPlayers,
     subscribePlayers
   };
