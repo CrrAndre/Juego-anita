@@ -23,10 +23,10 @@ const categories = [
 const defaultAvatar = "🦊";
 const getSelectedAvatar = () => document.querySelector('input[name="avatar"]:checked')?.value || defaultAvatar;
 const roundGroups = [
-  { name: "Lácteos y refrigerados", hint: "Rondas 01–05", focus: "Conservación en frío" },
-  { name: "Despensa y granos", hint: "Rondas 06–10", focus: "Productos secos" },
-  { name: "Frutas y verduras", hint: "Rondas 11–15", focus: "Productos frescos" },
-  { name: "Snacks y bebidas", hint: "Rondas 16–20", focus: "Listos para consumir" }
+  { name: "Mezcla de góndola", hint: "Rondas 01–05", focus: "Categorías variadas" },
+  { name: "Canasta surtida", hint: "Rondas 06–10", focus: "Productos de despensa y frío" },
+  { name: "Reto multisección", hint: "Rondas 11–15", focus: "Frescos, bebidas y hogar" },
+  { name: "Gran final mixta", hint: "Rondas 16–20", focus: "Todo el supermercado" }
 ];
 let productDetails = [
   { conservation: "Refrigerado", productType: "Lácteo", size: "1 litro" },
@@ -60,9 +60,44 @@ function isTriviaRound() {
 function getCurrentTriviaCard() {
   return triviaCards[Math.floor(productIndex / 4) % triviaCards.length];
 }
-const roundProductIndexes = Array.from({ length: Math.ceil(20 / 5) }, (_, blockIndex) => (
-  Array.from({ length: 5 }, (_, offset) => (blockIndex * 5) + offset)
-));
+function buildBalancedProductOrder(items, rounds) {
+  const preferredCategories = [
+    "Frutas y verduras",
+    "Lácteos y refrigerados",
+    "Despensa",
+    "Carnes y embutidos",
+    "Congelados",
+    "Dulces y snacks",
+    "Bebidas",
+    "Hogar y aseo"
+  ];
+  const queues = new Map();
+  items.forEach((product, index) => {
+    if (!queues.has(product.category)) queues.set(product.category, []);
+    queues.get(product.category).push(index);
+  });
+  const categories = [...queues.keys()].sort((a, b) => {
+    const aOrder = preferredCategories.indexOf(a);
+    const bOrder = preferredCategories.indexOf(b);
+    return (aOrder < 0 ? preferredCategories.length : aOrder) -
+      (bOrder < 0 ? preferredCategories.length : bOrder);
+  });
+  const usage = new Map(categories.map((category) => [category, 0]));
+  const order = [];
+  let lastCategory = null;
+
+  while (order.length < Math.min(rounds, items.length) && categories.some((category) => queues.get(category).length)) {
+    const available = categories
+      .filter((category) => queues.get(category).length && category !== lastCategory)
+      .sort((a, b) => usage.get(a) - usage.get(b) || categories.indexOf(a) - categories.indexOf(b));
+    const category = available[0] || categories.find((item) => queues.get(item).length);
+    order.push(queues.get(category).shift());
+    usage.set(category, usage.get(category) + 1);
+    lastCategory = category;
+  }
+  return order;
+}
+const productOrder = buildBalancedProductOrder(products, 20);
 const players = [
   { initials: "LU", name: "Lucía M.", points: 1480, time: "08.42s" },
   { initials: "TM", name: "Tomás R.", points: 1320, time: "09.07s" },
@@ -383,8 +418,7 @@ function renderLeaderboard() {
 }
 function renderProduct() {
   const blockIndex = Math.floor(productIndex / 5);
-  const productInBlock = productIndex % 5;
-  const productIndexForRound = roundProductIndexes[blockIndex][productInBlock];
+  const productIndexForRound = productOrder[productIndex];
   const product = products[productIndexForRound];
   const round = productIndex + 1;
   const group = roundGroups[blockIndex];
@@ -437,9 +471,7 @@ function renderProduct() {
   document.querySelectorAll(".category-button, #skip-button, .inline-truth-button").forEach((button) => { button.disabled = false; });
 }
 function getCurrentProduct() {
-  const blockIndex = Math.floor(productIndex / 5);
-  const productInBlock = productIndex % 5;
-  return products[roundProductIndexes[blockIndex][productInBlock]];
+  return products[productOrder[productIndex]];
 }
 function renderTriviaCard() {
   const card = specialCards[specialIndex];
