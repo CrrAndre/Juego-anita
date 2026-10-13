@@ -161,6 +161,7 @@ async function advanceRemoteRound() {
 async function handleRoomUpdate(payload) {
   if (gameOver) return;
   if (payload.new?.status === "playing") {
+    if (!isRoomHost && !$("#waiting-room").hidden) showGame();
     syncRemoteRoom(payload.new);
   } else if (payload.new?.status === "finished") {
     endGame();
@@ -218,7 +219,10 @@ async function joinRoom(event) {
         if (gameOver || !remoteRoomId) return;
         try {
           const currentRoom = await ShelfBackend.loadRoom(remoteRoomId);
-          if (currentRoom.status === "playing") syncRemoteRoom(currentRoom);
+          if (currentRoom.status === "playing") {
+            if (!isRoomHost && !$("#waiting-room").hidden) showGame();
+            syncRemoteRoom(currentRoom);
+          }
           else if (currentRoom.status === "finished") endGame();
         } catch (roomError) {
           console.error("No se pudo consultar el estado de la sala:", roomError);
@@ -259,6 +263,8 @@ async function joinRoom(event) {
     $(".game-section").hidden = true;
     $(".how-section").hidden = true;
     renderHostDashboard();
+  } else if (membership.mode === "remote" && room?.status === "playing") {
+    showGame();
   } else {
     showWaitingRoom();
   }
