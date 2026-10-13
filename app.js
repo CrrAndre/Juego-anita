@@ -113,13 +113,14 @@ let productIndex = 0;
 let score = 0;
 let streak = 0;
 let correctAnswers = 0;
-let seconds = 10;
+const totalRounds = 20;
+const roundDurationSeconds = 20;
+let seconds = roundDurationSeconds;
 let timerId;
 let cooldownTimerId;
 let cooldownSeconds = 0;
 let locked = false;
 let gameOver = false;
-const totalRounds = 20;
 const $ = (selector) => document.querySelector(selector);
 let feedbackAnimationId;
 let joinedRoomCode = "MANGO-42";
@@ -177,7 +178,7 @@ function syncRemoteRoom(room) {
     renderProduct();
   }
   const elapsedSeconds = Math.max(0, Math.floor((Date.now() - Date.parse(remoteRoundStartedAt)) / 1000));
-  seconds = Math.max(0, 10 - elapsedSeconds);
+  seconds = Math.max(0, roundDurationSeconds - elapsedSeconds);
   updateTimer();
   if (seconds <= 0) advanceRemoteRound();
   else startTimer();
@@ -469,7 +470,7 @@ function renderProduct() {
   void card.offsetWidth;
   renderCategories();
   ShelfMotion.revealProduct();
-  seconds = 10;
+  seconds = roundDurationSeconds;
   updateTimer();
   locked = false;
   document.querySelectorAll(".category-button, #skip-button, .inline-truth-button").forEach((button) => { button.disabled = false; });
@@ -579,7 +580,7 @@ function answer(category) {
   const correct = triviaRound
     ? category === String(triviaCard.answer)
     : categoriesMatch(category, product.category);
-  const points = correct ? 100 + (seconds * 20) : 0;
+  const points = correct ? 100 + (seconds * 10) : 0;
   const feedback = $("#feedback");
   if (correct) {
     score += points;
@@ -610,10 +611,10 @@ function answer(category) {
   if (currentPlayer) {
     currentPlayer.points = score;
     currentPlayer.correctAnswers = correctAnswers;
-    currentPlayer.time = `${(10 - seconds + 1).toFixed(2)}s`;
+    currentPlayer.time = `${(roundDurationSeconds - seconds + 1).toFixed(2)}s`;
   }
   if (remotePlayerId) {
-    const responseMs = (10 - seconds) * 1000;
+    const responseMs = (roundDurationSeconds - seconds) * 1000;
     ShelfBackend.recordPlayerResult(remotePlayerId, responseMs, correct)
       .catch((resultError) => { console.error("No se pudo actualizar el resultado remoto:", resultError); });
   }
@@ -649,7 +650,7 @@ function startCooldown() {
 function tick() {
   if (remoteRoomId) {
     const elapsedSeconds = Math.max(0, Math.floor((Date.now() - Date.parse(remoteRoundStartedAt)) / 1000));
-    seconds = Math.max(0, 10 - elapsedSeconds);
+    seconds = Math.max(0, roundDurationSeconds - elapsedSeconds);
     updateTimer();
     if (seconds <= 0) advanceRemoteRound();
     return;

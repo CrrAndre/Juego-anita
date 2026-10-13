@@ -106,7 +106,10 @@ create policy "active trivia is readable" on public.trivia_cards for select usin
 
 create or replace function public.calculate_points(is_correct boolean, response_ms integer)
 returns integer language sql immutable as $$
-  select case when is_correct then 100 + greatest(0, 10 - least(10, floor(response_ms / 1000.0)::integer)) * 20 else 0 end;
+  select case when is_correct
+    then 100 + greatest(0, 20 - least(20, floor(response_ms / 1000.0)::integer)) * 10
+    else 0
+  end;
 $$;
 
 create or replace function public.join_room(
@@ -257,7 +260,7 @@ begin
   end if;
 
   if current_room.round_started_at is not null
-     and now() < current_room.round_started_at + interval '10 seconds' then
+     and now() < current_room.round_started_at + interval '20 seconds' then
     return current_room;
   end if;
 

@@ -35,6 +35,7 @@ Después abre `http://localhost:4173`.
 - La categoría visible `Lácteos` acepta los productos almacenados como `Lácteos y refrigerados`, para mantener una etiqueta clara sin romper el catálogo remoto.
 - El catálogo activo contiene 30 productos y ocho categorías sin opciones antiguas o contradictorias.
 - Las 20 rondas usan una secuencia equilibrada y determinista que mezcla categorías y evita repetir la misma sección consecutivamente.
+- Cada ronda permite 20 segundos para responder; la pausa entre rondas se mantiene en 10 segundos.
 - Al salir el creador, la sala remota se elimina automáticamente; los demás jugadores solo abandonan su membresía.
 - Animaciones ligeras para producto, progreso y feedback.
 - Estilo visual liquid glass retro-moderno con efectos de tilt, ripple y transiciones centralizadas en `animations.js`.
