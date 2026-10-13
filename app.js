@@ -69,8 +69,9 @@ async function joinRoom(event) {
   submitButton.disabled = true;
   error.textContent = action === "create" && ShelfBackend.isConfigured ? "Creando la sala..." :
     action === "join" && ShelfBackend.isConfigured ? "Verificando la sala..." : "";
+  let membership;
   try {
-    const membership = action === "create"
+    membership = action === "create"
       ? await ShelfBackend.createRoom(username, getInitials(username))
       : await ShelfBackend.joinRoom(roomCode, username, getInitials(username));
     currentUser = username;
