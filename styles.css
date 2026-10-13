@@ -236,6 +236,11 @@ body.dark-mode .your-score b, body.dark-mode .round-meta strong, body.dark-mode 
 .truth-button:hover:not(:disabled), .truth-button:focus-visible, .special-level-button:hover, .special-level-button:focus-visible { border-color: var(--violet); background: rgba(113,100,255,.2); outline: none; transform: translateY(-2px); }
 .truth-button-false { border-color: rgba(210,87,137,.3); background: rgba(210,87,137,.08); color: #c25987; }
 .truth-source { margin: 24px 0 0; color: var(--muted); font: 10px/1.5 var(--mono); }
+.inline-trivia { padding: clamp(24px, 5vw, 52px); border: 1px solid var(--line); border-radius: 30px; background: var(--surface); box-shadow: var(--shadow), inset 0 1px rgba(255,255,255,.9); animation: product-enter .55s cubic-bezier(.2,.8,.2,1) both; }
+.inline-trivia-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.inline-trivia h3 { margin: 28px 0 16px; font-size: clamp(38px, 6vw, 64px); line-height: .92; letter-spacing: -.06em; }
+.inline-trivia h3 em { color: var(--violet); font-style: normal; }
+.inline-trivia .truth-statement { min-height: 90px; max-width: 850px; }
 .special-level-button { width: 100%; margin-top: 10px; }
 @media (max-width: 520px) {
   .special-level { padding: 50px 0 70px; }

@@ -52,6 +52,12 @@ if (catalog.products.length) {
   }));
 }
 const triviaCards = catalog.trivia || [];
+function isTriviaRound() {
+  return triviaCards.length > 0 && productIndex % 4 === 3;
+}
+function getCurrentTriviaCard() {
+  return triviaCards[Math.floor(productIndex / 4) % triviaCards.length];
+}
 const roundProductIndexes = Array.from({ length: Math.ceil(20 / 5) }, (_, blockIndex) => (
   Array.from({ length: 5 }, (_, offset) => (blockIndex * 5) + offset)
 ));
@@ -374,6 +380,8 @@ function renderProduct() {
   const round = productIndex + 1;
   const group = roundGroups[blockIndex];
   const details = productDetails[productIndexForRound];
+  const triviaRound = isTriviaRound();
+  const triviaCard = triviaRound ? getCurrentTriviaCard() : null;
   $("#product-number").textContent = String(round).padStart(2, "0");
   $("#round-label").textContent = `Ronda ${String(round).padStart(2, "0")} / ${totalRounds}`;
   $("#round-group").textContent = `${group.name} · ${group.focus}`;
@@ -390,6 +398,19 @@ function renderProduct() {
   $("#product-type").textContent = details.productType;
   $("#product-size").textContent = details.size;
   $("#product-origin").textContent = details.origin || "Documento de referencia";
+  $("#inline-trivia").hidden = !triviaRound;
+  $(".game-layout").hidden = triviaRound;
+  if (triviaCard) {
+    $("#inline-trivia-difficulty").textContent = `NIVEL ${triviaCard.difficulty.toUpperCase()} · ${triviaCard.topic.toUpperCase()}`;
+    $("#inline-trivia-statement").textContent = triviaCard.statement;
+    $("#inline-trivia-source").textContent = `Fuente: ${triviaCard.source} · ${triviaCard.product}`;
+    $("#inline-trivia-feedback").textContent = "";
+    $("#inline-trivia-feedback").className = "feedback";
+    document.querySelectorAll(".inline-truth-button").forEach((button) => {
+      button.disabled = false;
+      button.classList.remove("selected-correct", "selected-wrong");
+    });
+  }
   const card = $("#product-card");
   card.style.setProperty("--enter-x", `${productIndex % 2 ? 28 : -28}px`);
   card.style.setProperty("--enter-rotate", `${productIndex % 2 ? 2 : -2}deg`);
@@ -402,7 +423,7 @@ function renderProduct() {
   seconds = 10;
   updateTimer();
   locked = false;
-  document.querySelectorAll(".category-button, #skip-button").forEach((button) => { button.disabled = false; });
+  document.querySelectorAll(".category-button, #skip-button, .inline-truth-button").forEach((button) => { button.disabled = false; });
 }
 function getCurrentProduct() {
   const blockIndex = Math.floor(productIndex / 5);
@@ -484,12 +505,23 @@ function showFeedbackAnimation(correct, category) {
 function answer(category) {
   if (locked || gameOver) return;
   locked = true;
-  document.querySelectorAll(".category-button, #skip-button").forEach((button) => { button.disabled = true; });
+  document.querySelectorAll(".category-button, #skip-button, .inline-truth-button").forEach((button) => { button.disabled = true; });
   const product = getCurrentProduct();
-  const correct = category === product.category;
+  const triviaRound = isTriviaRound();
+  const triviaCard = triviaRound ? getCurrentTriviaCard() : null;
+  const correct = triviaRound
+    ? category === String(triviaCard.answer)
+    : category === product.category;
   const points = correct ? 100 + (seconds * 20) : 0;
   const feedback = $("#feedback");
-  if (correct) { score += points; correctAnswers += 1; streak += 1; feedback.textContent = `✓ ¡Correcto! +${points} puntos · ${seconds}s restantes`; feedback.className = "feedback correct"; } else { streak = 0; mistakeCounts[product.category] = (mistakeCounts[product.category] || 0) + 1; feedback.textContent = category === "__skipped__" ? `↷ Producto saltado. Era ${product.category}.` : `× Casi. Era ${product.category}. Respira y sigue.`; feedback.className = "feedback wrong"; }
+  if (correct) { score += points; correctAnswers += 1; streak += 1; feedback.textContent = `✓ ¡Correcto! +${points} puntos · ${seconds}s restantes`; feedback.className = "feedback correct"; } else { streak = 0; mistakeCounts[product.category] = (mistakeCounts[product.category] || 0) + 1; feedback.textContent = triviaRound ? `× Incorrecto. La respuesta era ${triviaCard.answer ? "Verdadero" : "Falso"}.` : category === "__skipped__" ? `↷ Producto saltado. Era ${product.category}.` : `× Casi. Era ${product.category}. Respira y sigue.`; feedback.className = "feedback wrong"; }
+  if (triviaRound) {
+    const triviaFeedback = $("#inline-trivia-feedback");
+    triviaFeedback.textContent = correct ? `✓ Correcto. ${triviaCard.explanation}` : `× Incorrecto. ${triviaCard.explanation}`;
+    triviaFeedback.className = `feedback ${correct ? "correct" : "wrong"}`;
+    const selected = [...document.querySelectorAll(".inline-truth-button")].find((button) => button.dataset.inlineAnswer === category);
+    if (selected) selected.classList.add(correct ? "selected-correct" : "selected-wrong");
+  }
   showFeedbackAnimation(correct, category);
   $("#streak-value").textContent = streak;
   const currentPlayer = players.find((player) => player.me);
@@ -652,6 +684,9 @@ $("#start-game-button").addEventListener("click", startHostGame);
 $("#special-level-button").addEventListener("click", startTriviaLevel);
 document.querySelectorAll(".truth-button").forEach((button) => {
   button.addEventListener("click", () => answerTrivia(button.dataset.answer === "true"));
+});
+document.querySelectorAll(".inline-truth-button").forEach((button) => {
+  button.addEventListener("click", () => answer(button.dataset.inlineAnswer));
 });
 document.querySelectorAll(".leaderboard-tab").forEach((button) => {
   button.addEventListener("click", () => {

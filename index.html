@@ -179,6 +179,20 @@
               <button class="skip-button" id="skip-button" type="button"><span>↷</span> Saltar producto <kbd>SPACE</kbd></button>
             </aside>
           </div>
+          <article class="inline-trivia" id="inline-trivia" hidden aria-labelledby="inline-trivia-title">
+            <div class="inline-trivia-heading">
+              <span class="special-badge">RONDA DE TRIVIA</span>
+              <span class="special-difficulty" id="inline-trivia-difficulty"></span>
+            </div>
+            <h3 id="inline-trivia-title">¿Verdadero <em>o falso?</em></h3>
+            <p class="truth-statement" id="inline-trivia-statement"></p>
+            <div class="truth-actions">
+              <button class="truth-button inline-truth-button" type="button" data-inline-answer="true">Verdadero <span>✓</span></button>
+              <button class="truth-button truth-button-false inline-truth-button" type="button" data-inline-answer="false">Falso <span>×</span></button>
+            </div>
+            <p class="truth-source" id="inline-trivia-source"></p>
+            <div class="feedback" id="inline-trivia-feedback" role="status" aria-live="polite"></div>
+          </article>
         </section>
 
         <section class="special-level" id="special-level" hidden aria-labelledby="special-level-title">
